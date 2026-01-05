@@ -1,0 +1,1200 @@
+
+Use bakery_busness;
+
+user
+
+  CREATE TABLE user (
+			user_id INT AUTO_INCREMENT PRIMARY KEY,
+			user_name VARCHAR(255) NOT NULL,
+			personal_name  VARCHAR(255) NOT NULL,
+			user_password DECIMAL(10,2) NOT NULL,
+			job_desc VARCHAR(255) NOT NULL
+		);
+
+
+
+INSERT INTO user (user_name, personal_name, user_password, job_desc)
+VALUES 
+('john_doe', 'John Doe', 'password123', 'Manager'),
+('jane_smith', 'Jane Smith', 'securepass', 'Cashier'),
+('mike_jones', 'Mike Jones', 'mike2026', 'Chef'),
+('sara_lee', 'Sara Lee', 'sara!@#', 'Waiter'),
+('alex_kim', 'Alex Kim', 'alexpass', 'Receptionist');
+
+
+
+
+
+
+
+products
+
+		CREATE TABLE products (
+			good_number INT AUTO_INCREMENT PRIMARY KEY,
+			good_name VARCHAR(255) NOT NULL,
+			price DECIMAL(10,2) NOT NULL,
+			image_path VARCHAR(500),
+			description TEXT
+		);
+
+		+-------------+---------------+------+-----+---------+----------------+
+		| Field       | Type          | Null | Key | Default | Extra          |
+		+-------------+---------------+------+-----+---------+----------------+
+		| good_number | int           | NO   | PRI | NULL    | auto_increment |
+		| good_name   | varchar(255)  | NO   |     | NULL    |                |
+		| price       | decimal(10,2) | NO   |     | NULL    |                |
+		| image_path  | varchar(500)  | YES  |     | NULL    |                |
+		| description | text          | YES  |     | NULL    |                |
+		+-------------+---------------+------+-----+---------+----------------+
+
+
+			+-------------+-----------------------+-------+------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+			| good_number | good_name             | price | image_path                                           | description                                                                                            |
+			+-------------+-----------------------+-------+------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+			|           1 | banana_cake           |  6.00 | static/food_menu_images/banana_cake_image.jpg        | Moist and sweet banana loaf, lightly spiced, perfect for breakfast or a snack.                         |
+			|           2 | blackforest_cake      |  6.00 | static/food_menu_images/blackforest_cake_image.jpg   | A rich chocolate cake layered with cherries and whipped cream.                                         |
+			|           3 | cake_bread            |  3.00 | static/food_menu_images/cake_bread_pic.jpg           | A soft and slightly sweet bread, perfect for breakfast or snacks.                                      |
+			|           4 | cheese_cake           |  5.00 | static/food_menu_images/cheese_cake_image.jpg        | A rich and creamy dessert with a smooth cheese filling on a buttery crust.                             |
+			|           5 | chiffon_cake          |  6.00 | static/food_menu_images/chiffon_cake_image.jpg       | A light and airy cake made with vegetable oil and whipped egg whites.                                  |
+			|           6 | butter_cake           |  4.00 | static/food_menu_images/butter_cake_inmage.jpg       | A soft, buttery cake with a golden crust and tender crumb.                                             |
+			|           7 | choclate_mouse        |  6.00 | static/food_menu_images/chocolate_moos_image.jpg     | A creamy, fluffy chocolate dessert with a smooth texture.                                              |
+			|           8 | choclate_cake         |  6.00 | static/food_menu_images/chocolate_cake_image.jpg     | A moist and rich chocolate cake perfect for any chocolate lover.                                       |
+			|           9 | cream_cupcake         |  4.00 | static/food_menu_images/cream_cupcake_image.jpg      | A soft cupcake topped with sweet, creamy frosting.                                                     |
+			|          10 | french_bread          |  3.00 | static/food_menu_images/french_bread_pic.jpg         | A classic French bread with a crisp crust and soft, airy interior.                                     |
+			|          11 | italian_bread         |  4.00 | static/food_menu_images/italian_bread_pic.jpg        | A soft and flavorful Italian bread, perfect for sandwiches or toasting.                                |
+			|          12 | lemon_cake            |  6.00 | static/food_menu_images/lemon_cake_image.jpg         | A zesty, moist cake with a fresh lemon flavor.                                                         |
+			|          13 | poundcake             |  5.00 | static/food_menu_images/poundcake_image.jpg          | A dense, buttery cake with a rich, classic flavor.                                                     |
+			|          14 | sliced_bread          |  3.00 | static/food_menu_images/sliced_bread_pic.jpg         | A soft and freshly sliced bread, perfect for sandwiches or toast.                                      |
+			|          15 | soughdough_bread      |  4.00 | static/food_menu_images/soughdough_bread_pic.jpg     | A tangy and crusty sourdough bread, perfect for sandwiches or toasting.                                |
+			|          16 | sponge_cake           |  5.00 | static/food_menu_images/sponge_cake_image.jpg        | A light and airy sponge cake, perfect for layering or enjoying as is.                                  |
+			|          17 | strawberry_mouse      |  5.00 | static/food_menu_images/strawberry_mouse_image.jpg   | A smooth and airy dessert flavored with fresh strawberries.                                            |
+			|          18 | tiramisu_cake         |  6.00 | static/food_menu_images/tiramisu_cake_image.jpg      | An Italian-inspired cake with coffee-soaked layers and creamy mascarpone.                              |
+			|          19 | yeast_donut           |  6.00 | static/food_menu_images/yeast_donut_image.jpg        | Generated description here                                                                             |
+			|          20 | jelly_doughnut        |  6.00 | static/food_menu_images/jelly_doughnut_image.jpg     | A soft doughnut filled with sweet jelly and coated with sugar.                                         |
+			|          21 | glazed_doughnut       |  5.00 | static/food_menu_images/glazed_donut_image.jpg       | A classic glazed doughnut with a sweet sugar coating, soft and fluffy.                                 |
+			|          22 | Cruller_Doughnut      |  6.00 | static/food_menu_images/cruller_donut_image.jpg      | A light, twisted doughnut with a slightly crisp exterior and soft interior, perfect for a sweet snack. |
+			|          23 | Churro                |  5.00 | static/food_menu_images/churro_image.jpg             | A crunchy, cinnamon-sugar coated doughnut-style treat, perfect for dipping in chocolate or caramel.    |
+			|          24 | Chocolate Doughnut    |  6.00 | static/food_menu_images/choclate_doughnut_image.jpg  | A rich chocolate-glazed doughnut, soft and fluffy inside, perfect for chocolate lovers.                |
+			|          25 | Boston Cream Doughnut |  7.00 | static/food_menu_images/boston_cream_donut_image.jpg | A classic Boston Cream Doughnut filled with creamy custard and topped with a chocolate glaze.          |
+			+-------------+-----------------------+-------+------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+			
+			INSERT INTO products (good_name, price, image_path, description) VALUES
+			('banana_cake', 6.00, 'static/food_menu_images/banana_cake_image.jpg',
+			 'Moist and sweet banana loaf, lightly spiced, perfect for breakfast or a snack.'),
+
+			('blackforest_cake', 6.00, 'static/food_menu_images/blackforest_cake_image.jpg',
+			 'A rich chocolate cake layered with cherries and whipped cream.'),
+
+			('cake_bread', 3.00, 'static/food_menu_images/cake_bread_pic.jpg',
+			 'A soft and slightly sweet bread, perfect for breakfast or snacks.'),
+
+			('cheese_cake', 5.00, 'static/food_menu_images/cheese_cake_image.jpg',
+			 'A rich and creamy dessert with a smooth cheese filling on a buttery crust.'),
+
+			('chiffon_cake', 6.00, 'static/food_menu_images/chiffon_cake_image.jpg',
+			 'A light and airy cake made with vegetable oil and whipped egg whites.'),
+
+			('butter_cake', 4.00, 'static/food_menu_images/butter_cake_inmage.jpg',
+			 'A soft, buttery cake with a golden crust and tender crumb.'),
+
+			('choclate_mouse', 6.00, 'static/food_menu_images/chocolate_moos_image.jpg',
+			 'A creamy, fluffy chocolate dessert with a smooth texture.'),
+
+			('choclate_cake', 6.00, 'static/food_menu_images/chocolate_cake_image.jpg',
+			 'A moist and rich chocolate cake perfect for any chocolate lover.'),
+
+			('cream_cupcake', 4.00, 'static/food_menu_images/cream_cupcake_image.jpg',
+			 'A soft cupcake topped with sweet, creamy frosting.'),
+
+			('french_bread', 3.00, 'static/food_menu_images/french_bread_pic.jpg',
+			 'A classic French bread with a crisp crust and soft, airy interior.'),
+
+			('italian_bread', 4.00, 'static/food_menu_images/italian_bread_pic.jpg',
+			 'A soft and flavorful Italian bread, perfect for sandwiches or toasting.'),
+
+			('lemon_cake', 6.00, 'static/food_menu_images/lemon_cake_image.jpg',
+			 'A zesty, moist cake with a fresh lemon flavor.'),
+
+			('poundcake', 5.00, 'static/food_menu_images/poundcake_image.jpg',
+			 'A dense, buttery cake with a rich, classic flavor.'),
+
+			('sliced_bread', 3.00, 'static/food_menu_images/sliced_bread_pic.jpg',
+			 'A soft and freshly sliced bread, perfect for sandwiches or toast.'),
+
+			('soughdough_bread', 4.00, 'static/food_menu_images/soughdough_bread_pic.jpg',
+			 'A tangy and crusty sourdough bread, perfect for sandwiches or toasting.'),
+
+			('sponge_cake', 5.00, 'static/food_menu_images/sponge_cake_image.jpg',
+			 'A light and airy sponge cake, perfect for layering or enjoying as is.'),
+
+			('strawberry_mouse', 5.00, 'static/food_menu_images/strawberry_mouse_image.jpg',
+			 'A smooth and airy dessert flavored with fresh strawberries.'),
+
+			('tiramisu_cake', 6.00, 'static/food_menu_images/tiramisu_cake_image.jpg',
+			 'An Italian-inspired cake with coffee-soaked layers and creamy mascarpone.'),
+
+			('yeast_donut', 6.00, 'static/food_menu_images/yeast_donut_image.jpg',
+			 'Generated description here'),
+
+			('jelly_doughnut', 6.00, 'static/food_menu_images/jelly_doughnut_image.jpg',
+			 'A soft doughnut filled with sweet jelly and coated with sugar.'),
+
+			('glazed_doughnut', 5.00, 'static/food_menu_images/glazed_donut_image.jpg',
+			 'A classic glazed doughnut with a sweet sugar coating, soft and fluffy.'),
+
+			('Cruller_Doughnut', 6.00, 'static/food_menu_images/cruller_donut_image.jpg',
+			 'A light, twisted doughnut with a slightly crisp exterior and soft interior, perfect for a sweet snack.'),
+
+			('Churro', 5.00, 'static/food_menu_images/churro_image.jpg',
+			 'A crunchy, cinnamon-sugar coated doughnut-style treat, perfect for dipping in chocolate or caramel.'),
+
+			('Chocolate Doughnut', 6.00, 'static/food_menu_images/choclate_doughnut_image.jpg',
+			 'A rich chocolate-glazed doughnut, soft and fluffy inside, perfect for chocolate lovers.'),
+
+			('Boston Cream Doughnut', 7.00, 'static/food_menu_images/boston_cream_donut_image.jpg',
+			 'A classic Boston Cream Doughnut filled with creamy custard and topped with a chocolate glaze.');
+
+
+
+products_type
+
+		DESCRIBE products_type;
+
+
+		 CREATE TABLE products_type (
+				 good_type_number INT AUTO_INCREMENT PRIMARY KEY,
+				 good_number INT,
+				 good_type TEXT,
+				 CONSTRAINT fk_table_products
+					 FOREIGN KEY (good_number)
+					 REFERENCES products(good_number)
+			 );
+
+		+------------------+------+------+-----+---------+----------------+
+		| Field            | Type | Null | Key | Default | Extra          |
+		+------------------+------+------+-----+---------+----------------+
+		| good_type_number | int  | NO   | PRI | NULL    | auto_increment |
+		| good_number      | int  | YES  | MUL | NULL    |                |
+		| good_type        | text | YES  |     | NULL    |                |
+		+------------------+------+------+-----+---------+----------------+
+
+
+		INSERT INTO products_type (good_number, good_type) VALUES
+		(1,  'cake'),
+		(2,  'cake'),
+		(3,  'bread'),
+		(4,  'cake'),
+		(5,  'cake'),
+		(6,  'cake'),
+		(7, 'cake'),
+		(8, 'cake'),
+		(9, 'cake'),
+		(10, 'bread'),
+		(11, 'bread'),
+		(12, 'cake'),
+		(13, 'cake'),
+		(14, 'bread'),
+		(15, 'bread'),
+		(16, 'bread'),
+		(17, 'bread'),
+		(18, 'bread'),
+		(19, 'doughnut'),
+		(20, 'doughnut'),
+		(21, 'doughnut'),
+		(22, 'doughnut'),
+		(23, 'doughnut'),
+		(24, 'doughnut'),
+		(25, 'doughnut');
+
+		Select * from products_type;
+
+		+------------------+-------------+-----------+
+		| good_type_number | good_number | good_type |
+		+------------------+-------------+-----------+
+		|                1 |           1 | cake      |
+		|                2 |           2 | cake      |
+		|                3 |           3 | bread     |
+		|                4 |           4 | cake      |
+		|                5 |           5 | cake      |
+		|                6 |           6 | cake      |
+		|                7 |           7 | cake      |
+		|                8 |           8 | cake      |
+		|                9 |           9 | cake      |
+		|               10 |          10 | bread     |
+		|               11 |          11 | bread     |
+		|               12 |          12 | cake      |
+		|               13 |          13 | cake      |
+		|               14 |          14 | bread     |
+		|               15 |          15 | bread     |
+		|               16 |          16 | bread     |
+		|               17 |          17 | bread     |
+		|               18 |          18 | bread     |
+		|               19 |          19 | doughnut  |
+		|               20 |          20 | doughnut  |
+		|               21 |          21 | doughnut  |
+		|               22 |          22 | doughnut  |
+		|               23 |          23 | doughnut  |
+		|               24 |          24 | doughnut  |
+		|               25 |          25 | doughnut  |
+		+------------------+-------------+-----------+
+		25 rows in set (0.00 sec)
+
+tables
+
+
+					CREATE TABLE tables (
+							Table_db_id INT AUTO_INCREMENT PRIMARY KEY,
+							Table_number VARCHAR(50) NOT NULL UNIQUE,
+							table_capacity VARCHAR(50)
+						 );
+
+					+----------------+-------------+------+-----+---------+----------------+
+					| Field          | Type        | Null | Key | Default | Extra          |
+					+----------------+-------------+------+-----+---------+----------------+
+					| Table_db_id    | int         | NO   | PRI | NULL    | auto_increment |
+					| Table_number   | varchar(50) | NO   | UNI | NULL    |                |
+					| table_capacity | varchar(50) | YES  |     | NULL    |                |
+					+----------------+-------------+------+-----+---------+----------------+
+
+					INSERT INTO tables (Table_number, table_capacity) VALUES
+					('T-01', '2 persons'),
+					('T-02', '2 persons'),
+					('T-03', '4 persons'),
+					('T-04', '4 persons'),
+					('T-05', '6 persons'),
+					('T-06', '6 persons'),
+					('T-07', '12 persons'),
+					('T-08', '12 persons'),
+					('T-09', '2 persons'),
+					('T-10', '4 persons'),
+					('T-11', '6 persons'),
+					('T-12', '12 persons'),
+					('T-13', '2 persons'),
+					('T-14', '2 persons'),
+					('T-15', '4 persons'),
+					('T-16', '4 persons'),
+					('T-17', '6 persons'),
+					('T-18', '6 persons'),
+					('T-19', '12 persons'),
+					('T-20', '12 persons'),
+					('T-21', '2 persons'),
+					('T-22', '4 persons'),
+					('T-23', '6 persons'),
+					('T-24', '12 persons'),
+					('T-25', '2 persons'),
+					('T-26', '2 persons'),
+					('T-27', '4 persons'),
+					('T-28', '4 persons'),
+					('T-29', '6 persons'),
+					('T-30', '6 persons'),
+					('T-31', '12 persons'),
+					('T-32', '12 persons'),
+					('T-33', '2 persons'),
+					('T-34', '4 persons'),
+					('T-35', '6 persons'),
+					('T-36', '12 persons'),
+					('T-37', '2 persons'),
+					('T-38', '4 persons'),
+					('T-39', '6 persons'),
+					('T-40', '12 persons'),
+					('T-41', '2 persons'),
+					('T-42', '4 persons'),
+					('T-43', '6 persons'),
+					('T-44', '12 persons'),
+					('T-45', '2 persons'),
+					('T-46', '4 persons'),
+					('T-47', '6 persons'),
+					('T-48', '12 persons'),
+					('T-49', '2 persons'),
+					('T-50', '4 persons');
+
+
+					+-------------+--------------+----------------+
+					| Table_db_id | Table_number | table_capacity |
+					+-------------+--------------+----------------+
+					|           1 | T-01         | 2 persons      |
+					|           2 | T-02         | 2 persons      |
+					|           3 | T-03         | 4 persons      |
+					|           4 | T-04         | 4 persons      |
+					|           5 | T-05         | 6 persons      |
+					|           6 | T-06         | 6 persons      |
+					|           7 | T-07         | 12 persons     |
+					|           8 | T-08         | 12 persons     |
+					|           9 | T-09         | 2 persons      |
+					|          10 | T-10         | 4 persons      |
+					|          11 | T-11         | 6 persons      |
+					|          12 | T-12         | 12 persons     |
+					|          13 | T-13         | 2 persons      |
+					|          14 | T-14         | 2 persons      |
+					|          15 | T-15         | 4 persons      |
+					|          16 | T-16         | 4 persons      |
+					|          17 | T-17         | 6 persons      |
+					|          18 | T-18         | 6 persons      |
+					|          19 | T-19         | 12 persons     |
+					|          20 | T-20         | 12 persons     |
+					|          21 | T-21         | 2 persons      |
+					|          22 | T-22         | 4 persons      |
+					|          23 | T-23         | 6 persons      |
+					|          24 | T-24         | 12 persons     |
+					|          25 | T-25         | 2 persons      |
+					|          26 | T-26         | 2 persons      |
+					|          27 | T-27         | 4 persons      |
+					|          28 | T-28         | 4 persons      |
+					|          29 | T-29         | 6 persons      |
+					|          30 | T-30         | 6 persons      |
+					|          31 | T-31         | 12 persons     |
+					|          32 | T-32         | 12 persons     |
+					|          33 | T-33         | 2 persons      |
+					|          34 | T-34         | 4 persons      |
+					|          35 | T-35         | 6 persons      |
+					|          36 | T-36         | 12 persons     |
+					|          37 | T-37         | 2 persons      |
+					|          38 | T-38         | 4 persons      |
+					|          39 | T-39         | 6 persons      |
+					|          40 | T-40         | 12 persons     |
+					|          41 | T-41         | 2 persons      |
+					|          42 | T-42         | 4 persons      |
+					|          43 | T-43         | 6 persons      |
+					|          44 | T-44         | 12 persons     |
+					|          45 | T-45         | 2 persons      |
+					|          46 | T-46         | 4 persons      |
+					|          47 | T-47         | 6 persons      |
+					|          48 | T-48         | 12 persons     |
+					|          49 | T-49         | 2 persons      |
+					|          50 | T-50         | 4 persons      |
+					+-------------+--------------+----------------+
+
+
+Table_floor
+
+				CREATE TABLE table_floor (
+					t_floor_id INT AUTO_INCREMENT PRIMARY KEY,
+					Table_db_id INT NOT NULL,
+					floor_name TEXT,
+					CONSTRAINT fk_table_floor
+						FOREIGN KEY (Table_db_id) REFERENCES tables(Table_db_id)
+						ON DELETE CASCADE
+						ON UPDATE CASCADE
+				);
+
+
+				+-------------+------+------+-----+---------+----------------+
+				| Field       | Type | Null | Key | Default | Extra          |
+				+-------------+------+------+-----+---------+----------------+
+				| t_floor_id  | int  | NO   | PRI | NULL    | auto_increment |
+				| Table_db_id | int  | NO   | MUL | NULL    |                |
+				| floor_name  | text | YES  |     | NULL    |                |
+				+-------------+------+------+-----+---------+----------------+
+
+
+
+				INSERT INTO table_floor (Table_db_id, floor_name) VALUES
+				(1, '3rd_floor'),
+				(2, '3rd_floor'),
+				(3, '3rd_floor'),
+				(4, '3rd_floor'),
+				(5, '3rd_floor'),
+				(6, '3rd_floor'),
+				(7, '3rd_floor'),
+				(8, '3rd_floor'),
+				(9, '3rd_floor'),
+				(10, '3rd_floor'),
+				(11, '3rd_floor'),
+				(12, '3rd_floor'),
+				(13, '2nd_floor'),
+				(14, '2nd_floor'),
+				(15, '2nd_floor'),
+				(16, '2nd_floor'),
+				(17, '2nd_floor'),
+				(18, '2nd_floor'),
+				(19, '2nd_floor'),
+				(20, '2nd_floor'),
+				(21, '2nd_floor'),
+				(22, '2nd_floor'),
+				(23, '2nd_floor'),
+				(24, '2nd_floor'),
+				(25, '1st_floor'),
+				(26, '1st_floor'),
+				(27, '1st_floor'),
+				(28, '1st_floor'),
+				(29, '1st_floor'),
+				(30, '1st_floor'),
+				(31, '1st_floor'),
+				(32, '1st_floor'),
+				(33, '1st_floor'),
+				(34, '1st_floor'),
+				(35, '1st_floor'),
+				(36, '1st_floor'),
+				(37, '3rd_floor'),
+				(38, '3rd_floor'),
+				(39, '3rd_floor'),
+				(40, '3rd_floor'),
+				(41, '2nd_floor'),
+				(42, '2nd_floor'),
+				(43, '2nd_floor'),
+				(44, '2nd_floor'),
+				(45, '1st_floor'),
+				(46, '1st_floor'),
+				(47, '1st_floor'),
+				(48, '1st_floor'),
+				(49, '3rd_floor'),
+				(50, '2nd_floor');
+
+
+
+				+------------+-------------+------------+
+				| t_floor_id | Table_db_id | floor_name |
+				+------------+-------------+------------+
+				|          1 |           1 | 3rd_floor  |
+				|          2 |           2 | 3rd_floor  |
+				|          3 |           3 | 3rd_floor  |
+				|          4 |           4 | 3rd_floor  |
+				|          5 |           5 | 3rd_floor  |
+				|          6 |           6 | 3rd_floor  |
+				|          7 |           7 | 3rd_floor  |
+				|          8 |           8 | 3rd_floor  |
+				|          9 |           9 | 3rd_floor  |
+				|         10 |          10 | 3rd_floor  |
+				|         11 |          11 | 3rd_floor  |
+				|         12 |          12 | 3rd_floor  |
+				|         13 |          13 | 2nd_floor  |
+				|         14 |          14 | 2nd_floor  |
+				|         15 |          15 | 2nd_floor  |
+				|         16 |          16 | 2nd_floor  |
+				|         17 |          17 | 2nd_floor  |
+				|         18 |          18 | 2nd_floor  |
+				|         19 |          19 | 2nd_floor  |
+				|         20 |          20 | 2nd_floor  |
+				|         21 |          21 | 2nd_floor  |
+				|         22 |          22 | 2nd_floor  |
+				|         23 |          23 | 2nd_floor  |
+				|         24 |          24 | 2nd_floor  |
+				|         25 |          25 | 1st_floor  |
+				|         26 |          26 | 1st_floor  |
+				|         27 |          27 | 1st_floor  |
+				|         28 |          28 | 1st_floor  |
+				|         29 |          29 | 1st_floor  |
+				|         30 |          30 | 1st_floor  |
+				|         31 |          31 | 1st_floor  |
+				|         32 |          32 | 1st_floor  |
+				|         33 |          33 | 1st_floor  |
+				|         34 |          34 | 1st_floor  |
+				|         35 |          35 | 1st_floor  |
+				|         36 |          36 | 1st_floor  |
+				|         37 |          37 | 3rd_floor  |
+				|         38 |          38 | 3rd_floor  |
+				|         39 |          39 | 3rd_floor  |
+				|         40 |          40 | 3rd_floor  |
+				|         41 |          41 | 2nd_floor  |
+				|         42 |          42 | 2nd_floor  |
+				|         43 |          43 | 2nd_floor  |
+				|         44 |          44 | 2nd_floor  |
+				|         45 |          45 | 1st_floor  |
+				|         46 |          46 | 1st_floor  |
+				|         47 |          47 | 1st_floor  |
+				|         48 |          48 | 1st_floor  |
+				|         49 |          49 | 3rd_floor  |
+				|         50 |          50 | 2nd_floor  |
+				+------------+-------------+------------+
+				50 rows in set (0.00 sec)
+
+
+CREATE TABLE table_reservations (
+    table_reservation_number INT AUTO_INCREMENT PRIMARY KEY,
+
+    Table_db_id INT NOT NULL,
+    user_id INT NULL,
+
+    Date_reserved DATE NULL,
+    number_of_people INT NULL,
+
+    table_status ENUM('available','reserved','served')
+        NOT NULL DEFAULT 'available',
+
+    CONSTRAINT fk_table_reservation_table
+        FOREIGN KEY (Table_db_id)
+        REFERENCES tables(Table_db_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_table_reservation_user
+        FOREIGN KEY (user_id)
+        REFERENCES user(user_id)
+        ON DELETE SET NULL
+);
+
+		
+		
+
+		+--------------------------+---------------------------------------+------+-----+-----------+----------------+
+		| Field                    | Type                                  | Null | Key | Default   | Extra          |
+		+--------------------------+---------------------------------------+------+-----+-----------+----------------+
+		| table_reservation_number | int                                   | NO   | PRI | NULL      | auto_increment |
+		| Table_db_id              | int                                   | NO   | MUL | NULL      |                |
+		| user_id                  | int                                   | NO   | MUL | NULL      |                |
+		| Date_reserved            | date                                  | NO   |     | NULL      |                |
+		| number_of_people         | int                                   | YES  |     | NULL      |                |
+		| table_status             | enum('available','reserved','served') | NO   |     | available |                |
+		+--------------------------+---------------------------------------+------+-----+-----------+----------------+
+ INSERT INTO table_reservations
+(Table_db_id, user_id, Date_reserved, number_of_people, table_status)
+VALUES
+-- RESERVED (20 tables) with user_id = 1
+(1, 1, '2025-12-19', 4, 'reserved'),
+(3, 1, '2025-12-19', 2, 'reserved'),
+(5, 1, '2025-12-19', 6, 'reserved'),
+(7, 1, '2025-12-19', 3, 'reserved'),
+(9, 1, '2025-12-19', 5, 'reserved'),
+(12, 1, '2025-12-19', 2, 'reserved'),
+(14, 1, '2025-12-19', 4, 'reserved'),
+(16, 1, '2025-12-19', 6, 'reserved'),
+(18, 1, '2025-12-19', 3, 'reserved'),
+(20, 1, '2025-12-19', 2, 'reserved'),
+(22, 1, '2025-12-19', 5, 'reserved'),
+(24, 1, '2025-12-19', 4, 'reserved'),
+(27, 1, '2025-12-19', 6, 'reserved'),
+(29, 1, '2025-12-19', 2, 'reserved'),
+(31, 1, '2025-12-19', 3, 'reserved'),
+(34, 1, '2025-12-19', 4, 'reserved'),
+(37, 1, '2025-12-19', 2, 'reserved'),
+(39, 1, '2025-12-19', 3, 'reserved'),
+(42, 1, '2025-12-19', 4, 'reserved'),
+(45, 1, '2025-12-19', 5, 'reserved'),
+
+-- AVAILABLE (30 tables) with NULLs
+(2, NULL, NULL, NULL, 'available'),
+(4, NULL, NULL, NULL, 'available'),
+(6, NULL, NULL, NULL, 'available'),
+(8, NULL, NULL, NULL, 'available'),
+(10, NULL, NULL, NULL, 'available'),
+(11, NULL, NULL, NULL, 'available'),
+(13, NULL, NULL, NULL, 'available'),
+(15, NULL, NULL, NULL, 'available'),
+(17, NULL, NULL, NULL, 'available'),
+(19, NULL, NULL, NULL, 'available'),
+(21, NULL, NULL, NULL, 'available'),
+(23, NULL, NULL, NULL, 'available'),
+(25, NULL, NULL, NULL, 'available'),
+(26, NULL, NULL, NULL, 'available'),
+(28, NULL, NULL, NULL, 'available'),
+(30, NULL, NULL, NULL, 'available'),
+(32, NULL, NULL, NULL, 'available'),
+(33, NULL, NULL, NULL, 'available'),
+(35, NULL, NULL, NULL, 'available'),
+(36, NULL, NULL, NULL, 'available'),
+(38, NULL, NULL, NULL, 'available'),
+(40, NULL, NULL, NULL, 'available'),
+(41, NULL, NULL, NULL, 'available'),
+(43, NULL, NULL, NULL, 'available'),
+(44, NULL, NULL, NULL, 'available'),
+(46, NULL, NULL, NULL, 'available'),
+(47, NULL, NULL, NULL, 'available'),
+(48, NULL, NULL, NULL, 'available'),
+(49, NULL, NULL, NULL, 'available'),
+(50, NULL, NULL, NULL, 'available');
+
+		
+	+--------------------------+-------------+---------+---------------+------------------+--------------+
+| table_reservation_number | Table_db_id | user_id | Date_reserved | number_of_people | table_status |
++--------------------------+-------------+---------+---------------+------------------+--------------+
+|                       51 |           1 |       1 | 2025-12-19    |                4 | reserved     |
+|                       52 |           3 |       1 | 2025-12-19    |                2 | reserved     |
+|                       53 |           5 |       1 | 2025-12-19    |                6 | reserved     |
+|                       54 |           7 |       1 | 2025-12-19    |                3 | reserved     |
+|                       55 |           9 |       1 | 2025-12-19    |                5 | reserved     |
+|                       56 |          12 |       1 | 2025-12-19    |                2 | reserved     |
+|                       57 |          14 |       1 | 2025-12-19    |                4 | reserved     |
+|                       58 |          16 |       1 | 2025-12-19    |                6 | reserved     |
+|                       59 |          18 |       1 | 2025-12-19    |                3 | reserved     |
+|                       60 |          20 |       1 | 2025-12-19    |                2 | reserved     |
+|                       61 |          22 |       1 | 2025-12-19    |                5 | reserved     |
+|                       62 |          24 |       1 | 2025-12-19    |                4 | reserved     |
+|                       63 |          27 |       1 | 2025-12-19    |                6 | reserved     |
+|                       64 |          29 |       1 | 2025-12-19    |                2 | reserved     |
+|                       65 |          31 |       1 | 2025-12-19    |                3 | reserved     |
+|                       66 |          34 |       1 | 2025-12-19    |                4 | reserved     |
+|                       67 |          37 |       1 | 2025-12-19    |                2 | reserved     |
+|                       68 |          39 |       1 | 2025-12-19    |                3 | reserved     |
+|                       69 |          42 |       1 | 2025-12-19    |                4 | reserved     |
+|                       70 |          45 |       1 | 2025-12-19    |                5 | reserved     |
+|                       71 |           2 |    NULL | NULL          |             NULL | available    |
+|                       72 |           4 |    NULL | NULL          |             NULL | available    |
+|                       73 |           6 |    NULL | NULL          |             NULL | available    |
+|                       74 |           8 |    NULL | NULL          |             NULL | available    |
+|                       75 |          10 |    NULL | NULL          |             NULL | available    |
+|                       76 |          11 |    NULL | NULL          |             NULL | available    |
+|                       77 |          13 |    NULL | NULL          |             NULL | available    |
+|                       78 |          15 |    NULL | NULL          |             NULL | available    |
+|                       79 |          17 |    NULL | NULL          |             NULL | available    |
+|                       80 |          19 |    NULL | NULL          |             NULL | available    |
+|                       81 |          21 |    NULL | NULL          |             NULL | available    |
+|                       82 |          23 |    NULL | NULL          |             NULL | available    |
+|                       83 |          25 |    NULL | NULL          |             NULL | available    |
+|                       84 |          26 |    NULL | NULL          |             NULL | available    |
+|                       85 |          28 |    NULL | NULL          |             NULL | available    |
+|                       86 |          30 |    NULL | NULL          |             NULL | available    |
+|                       87 |          32 |    NULL | NULL          |             NULL | available    |
+|                       88 |          33 |    NULL | NULL          |             NULL | available    |
+|                       89 |          35 |    NULL | NULL          |             NULL | available    |
+|                       90 |          36 |    NULL | NULL          |             NULL | available    |
+|                       91 |          38 |    NULL | NULL          |             NULL | available    |
+|                       92 |          40 |    NULL | NULL          |             NULL | available    |
+|                       93 |          41 |    NULL | NULL          |             NULL | available    |
+|                       94 |          43 |    NULL | NULL          |             NULL | available    |
+|                       95 |          44 |    NULL | NULL          |             NULL | available    |
+|                       96 |          46 |    NULL | NULL          |             NULL | available    |
+|                       97 |          47 |    NULL | NULL          |             NULL | available    |
+|                       98 |          48 |    NULL | NULL          |             NULL | available    |
+|                       99 |          49 |    NULL | NULL          |             NULL | available    |
+|                      100 |          50 |    NULL | NULL          |             NULL | available    |
++--------------------------+-------------+---------+---------------+------------------+--------------+
+50 rows in set (0.00 sec)	
+		
+		
+		
+		
+		
+		
+		
+		
+
+
+order_table
+
+		"order_db_id": primary-key auto_increment
+		"order_number": String 
+		"Dateandtime_ordered":Datetime
+
+		CREATE TABLE order_table (
+			order_db_id INT AUTO_INCREMENT PRIMARY KEY,
+			order_number VARCHAR(50) NOT NULL,
+			Dateandtime_ordered DATETIME NOT NULL
+		);
+
+		+---------------------+-------------+------+-----+---------+----------------+
+		| Field               | Type        | Null | Key | Default | Extra          |
+		+---------------------+-------------+------+-----+---------+----------------+
+		| order_db_id         | int         | NO   | PRI | NULL    | auto_increment |
+		| order_number        | varchar(50) | NO   |     | NULL    |                |
+		| Dateandtime_ordered | datetime    | NO   |     | NULL    |                |
+		+---------------------+-------------+------+-----+---------+----------------+
+		3 rows in set (0.00 sec
+
+************************************************************
+
+order_types
+
+			CREATE TABLE order_types (
+				order_types_id INT AUTO_INCREMENT PRIMARY KEY,
+				order_db_id INT NOT NULL,
+				order_type ENUM('dine_in', 'takeaway') NOT NULL,
+
+				CONSTRAINT fk_order_types_order
+					FOREIGN KEY (order_db_id)
+					REFERENCES order_table(order_db_id)
+					ON DELETE CASCADE
+					ON UPDATE CASCADE
+			);
+
+			+----------------+----------------------------+------+-----+---------+----------------+
+			| Field          | Type                       | Null | Key | Default | Extra          |
+			+----------------+----------------------------+------+-----+---------+----------------+
+			| order_types_id | int                        | NO   | PRI | NULL    | auto_increment |
+			| order_db_id    | int                        | NO   | MUL | NULL    |                |
+			| order_type     | enum('dine_in','takeaway') | NO   |     | NULL    |                |
+			+----------------+----------------------------+------+-----+---------+----------------+
+			3 rows in set (0.00 sec)
+
+
+************************************************************
+
+CREATE TABLE customer_orders_verification (
+    customer_order_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_name_order VARCHAR(100) NOT NULL,
+    order_db_id INT NOT NULL,
+    user_id INT NOT NULL,
+    order_table_location INT NULL,
+    
+    CONSTRAINT fk_customer_orders_order
+        FOREIGN KEY (order_db_id)
+        REFERENCES order_table(order_db_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_customer_orders_user
+        FOREIGN KEY (user_id)
+        REFERENCES user(user_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_customer_orders_table_location
+        FOREIGN KEY (order_table_location)
+        REFERENCES tables(Table_db_id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+
+		+----------------------+--------------+------+-----+---------+----------------+
+		| Field                | Type         | Null | Key | Default | Extra          |
+		+----------------------+--------------+------+-----+---------+----------------+
+		| customer_order_id    | int          | NO   | PRI | NULL    | auto_increment |
+		| customer_name_order  | varchar(100) | NO   |     | NULL    |                |
+		| order_db_id          | int          | NO   | MUL | NULL    |                |
+		| user_id              | int          | NO   | MUL | NULL    |                |
+		| order_table_location | int          | YES  | MUL | NULL    |                |
+		+----------------------+--------------+------+-----+---------+----------------+
+5 rows in set (0.00 sec)
+
+****************************************************************************************
+customer_goods_purchased
+
+			+-----------------------------+------+------+-----+---------+----------------+
+			| Field                       | Type | Null | Key | Default | Extra          |
+			+-----------------------------+------+------+-----+---------+----------------+
+			| customer_goods_purchased_id | int  | NO   | PRI | NULL    | auto_increment |
+			| customer_order_id           | int  | NO   | MUL | NULL    |                |
+			| good_number                 | int  | NO   | MUL | NULL    |                |
+			+-----------------------------+------+------+-----+---------+----------------+
+			3 rows in set (0.00 sec)
+
+			CREATE TABLE customer_goods_purchased (
+				customer_goods_purchased_id INT AUTO_INCREMENT PRIMARY KEY,
+				customer_order_id INT NOT NULL,
+				good_number INT NOT NULL,
+
+				CONSTRAINT fk_customer_goods_purchased_order
+					FOREIGN KEY (customer_order_id)
+					REFERENCES customer_orders_verification(customer_order_id)
+					ON DELETE CASCADE
+					ON UPDATE CASCADE,
+
+				CONSTRAINT fk_customer_goods_purchased_product
+					FOREIGN KEY (good_number)
+					REFERENCES products(good_number)
+					ON DELETE RESTRICT
+					ON UPDATE CASCADE
+			);
+
+*****************************************************************************
+
+customer_order_status
+
+customer_order_status_id - primary_key auto_increment 
+customer_order_id  foriegn-key from from customer_orders_verification
+customer_order_status
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+********************************************************************************
+
+
+
+
+
+ DELETE FROM order_table
+    WHERE order_db_id = 4;
+
+
++--------------------------------------------+
+| Tables_in_bakery_busness                   |
++--------------------------------------------+
+| customer_goods_purchased                   |
+| customer_order_payments                    |
+| customer_orders_verification               |
+| order_completion_status_time_of_completion |
+| order_payments_verification                |
+| order_table                                |
+| order_types                                |
+| products                                   |
+| products_type                              |
+| table_floor                                |
+| table_reservations                         |
+| tables                                     |
+| user                                       |
++--------------------------------------------+
+
+
+	 
+
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+	   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

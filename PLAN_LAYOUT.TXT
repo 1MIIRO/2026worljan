@@ -1,0 +1,1024 @@
+from flask import Flask, request, jsonify, render_template, render_template_string, session, redirect, url_for
+import mysql.connector
+from mysql.connector import Error
+from datetime import datetime
+
+app = Flask(__name__)
+app.secret_key = 'supersecretkey'  # Required for sessions
+
+# Database connection function
+def get_connection():
+    return mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='1234',
+        database='bakery_busness'
+    )
+
+# --- LOGIN PAGE TEMPLATE ---
+login_page_html = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; }
+        .vh-100 { height: 100vh; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center align-items-center vh-100">
+            <div class="col-md-4">
+                <div class="card p-4 shadow-lg">
+                    <h3 class="text-center mb-3">Login</h3>
+                    <form id="loginForm" method="POST" action="/login">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                        <p id="errorMsg" class="text-danger mt-2" style="display:none;">Invalid username or password</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+const loginForm = document.getElementById('loginForm');
+const errorMsg = document.getElementById('errorMsg');
+
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(loginForm);
+    const response = await fetch('/login', { method: 'POST', body: formData });
+    const result = await response.json();
+    if (result.success) {
+        window.location.href = '/dashboard';
+    } else {
+        errorMsg.style.display = 'block';
+    }
+});
+</script>
+</body>
+</html>
+"""
+
+def insert_into_order_table(order_number):
+    """
+    Inserts a new record into order_table
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO order_table (order_number, Dateandtime_ordered)
+        VALUES (%s, %s)
+    """, (order_number, datetime.now()))
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+@app.route('/')
+def login_page():
+    return render_template_string(login_page_html)
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM `user` WHERE user_name=%s AND user_password=%s", (username, password))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if user:
+        # Save user session
+        session['user_id'] = user['user_id']
+        session['user_name'] = user['user_name']
+        session['personal_name'] = user['personal_name']
+        session['job_desc'] = user['job_desc']
+        return jsonify({"success": True})
+
+    return jsonify({"success": False})
+
+@app.route('/dashboard')
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+
+    # Get user info from session
+    user_info = {
+        "user_name": session.get('user_name'),
+        "personal_name": session.get('personal_name'),
+        "job_desc": session.get('job_desc')
+    }
+
+    # Fetch products
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Table_db_id,  Table_number FROM tables ORDER BY  Table_number")
+    tables = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template('dashboard.html', user=user_info, products=products,tables=tables)
+
+@app.route('/activity_billing_queue')
+def activity_billing_queue():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+    
+    user_info = {
+        "user_name": session.get('user_name'),
+        "personal_name": session.get('personal_name'),
+        "job_desc": session.get('job_desc')
+    }
+
+    # Fetch all tables for the dropdown
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Table_db_id,  Table_number FROM tables ORDER BY  Table_number")
+    tables = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Pass the tables to the template
+    return render_template('activity_billing_queue.html', user=user_info, tables=tables)
+
+@app.route('/activity_Tables')
+def activity_Tables():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+
+    user_info = {
+        "user_name": session.get('user_name'),
+        "personal_name": session.get('personal_name'),
+        "job_desc": session.get('job_desc')
+    }
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT 
+            t.Table_db_id,
+            t.Table_number,
+            tf.floor_name AS table_floor,
+
+            COALESCE(tr.table_status, 'available') AS table_status,
+            tr.Date_reserved,
+            tr.number_of_people
+
+        FROM tables t
+
+        LEFT JOIN table_floor tf
+            ON t.Table_db_id = tf.Table_db_id
+
+        LEFT JOIN (
+            SELECT r1.*
+            FROM table_reservations r1
+            INNER JOIN (
+                SELECT Table_db_id, MAX(Date_reserved) AS max_date
+                FROM table_reservations
+                GROUP BY Table_db_id
+            ) r2
+            ON r1.Table_db_id = r2.Table_db_id
+            AND r1.Date_reserved = r2.max_date
+        ) tr
+            ON t.Table_db_id = tr.Table_db_id
+
+        ORDER BY tf.floor_name, t.Table_number
+    """
+
+    cursor.execute(query)
+    all_tables = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        'activity_Tables.html',
+        user=user_info,
+        tables=all_tables
+    )
+
+@app.route('/activity_Order_history')
+def activity_Order_history():
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+    
+    user_info = {
+        "user_name": session.get('user_name'),
+        "personal_name": session.get('personal_name'),
+        "job_desc": session.get('job_desc')
+    }
+    
+    # Fetch all tables for the dropdown
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT Table_db_id,  Table_number FROM tables ORDER BY  Table_number")
+    tables = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template('activity_Order_history.html',user=user_info,tables=tables)
+
+@app.route('/place_order_table', methods=['POST'])
+def place_order_table():
+    if 'user_id' not in session:
+        return jsonify({"success": False, "error": "User not logged in"})
+
+    data = request.get_json()
+    order_number = data.get('order_number')
+    order_type = data.get('order_type')  # dine_in / takeaway
+    customer_name = data.get('customer_name')
+    table_id = data.get('table_id')  # Table_db_id from dropdown
+    selected_products = data.get('selected_products', [])  # array of good names
+
+    if not order_number or not order_type or not customer_name:
+        return jsonify({"success": False, "error": "Missing required fields"})
+    if not selected_products:
+        return jsonify({"success": False, "error": "No products selected"})
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # 1️⃣ Insert into order_table
+        cursor.execute("""
+            INSERT INTO order_table (order_number, Dateandtime_ordered)
+            VALUES (%s, %s)
+        """, (order_number, datetime.now()))
+        order_db_id = cursor.lastrowid
+
+        # 2️⃣ Insert into order_types
+        cursor.execute("""
+            INSERT INTO order_types (order_db_id, order_type)
+            VALUES (%s, %s)
+        """, (order_db_id, order_type))
+
+        # 3️⃣ Insert into customer_orders_verification
+        cursor.execute("""
+            INSERT INTO customer_orders_verification 
+            (customer_name_order, order_db_id, user_id, order_table_location)
+            VALUES (%s, %s, %s, %s)
+        """, (customer_name, order_db_id, session['user_id'], table_id))
+
+        # Get the newly inserted customer_order_id
+        cursor.execute("""
+            SELECT customer_order_id 
+            FROM customer_orders_verification 
+            WHERE order_db_id=%s
+        """, (order_db_id,))
+        customer_order_id = cursor.fetchone()[0]
+
+        # 4️⃣ Insert selected goods into customer_goods_purchased
+        for good_name in selected_products:
+            # Get good_number from products table
+            cursor.execute("SELECT good_number FROM products WHERE good_name=%s", (good_name,))
+            row = cursor.fetchone()
+            if row:
+                good_number = row[0]
+                cursor.execute("""
+                    INSERT INTO customer_goods_purchased (customer_order_id, good_number)
+                    VALUES (%s, %s)
+                """, (customer_order_id, good_number))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True})
+
+    except Error as e:
+        print("Database Error:", e)
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login_page'))
+
+if __name__ == "__main__":
+ app.run(debug=True)
+ *************************************************************************************************************************************************************************************
+ 
+ 
+ 
+ 
+   
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        .btn-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+
+        .search-container {
+            transition: margin 0.3s ease;
+        }
+
+         /* SHIFT CLASSES */
+        .shifted-left { margin-left: 200px; }
+        .shifted-right { margin-right: 25%; } /* matches order panel width */
+        .shifted-left-time, .shifted-right-time { transition: margin 0.3s ease; }
+
+        /* PRODUCT DISPLAY */
+        .product-display {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            padding: 10px;
+            transition: margin 0.3s ease;
+        }
+
+        .product-display.shifted-right {
+            margin-right: 25%;
+        }
+
+        .product-card {
+            background: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .product-card:hover { transform: translateY(-5px); cursor: pointer; }
+
+        .product-card img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .product-name { font-weight: bold; font-size: 16px; margin-top: 8px; }
+        .product-price { color: green; font-size: 15px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="sidebar">
+        <div class="p-3">
+            <h5>{{ user.personal_name }}</h5>
+            <p>{{ user.job_desc }}</p>
+        </div>
+        <ul class="list-unstyled ps-3">
+            <li>
+                <a href="{{ url_for('dashboard') }}">Point_of_sales</a>
+            <li>
+               <a href="{{ url_for('activity_billing_queue') }}">Activity</a>
+            </li>
+            <li><a href="#">Inventory</a></li>
+            <li><a href="#">Teams</a></li>
+            <li><a href="#">Settings</a></li>
+        </ul>
+    </div>
+
+    <!-- ORDER PANEL -->
+    <div id="orderContainer" class="order-container">
+        <div class="order-top-bar" style="display:flex; align-items:center; gap:10px;">
+            <!-- Left notepad button -->
+            <button class="btn btn-light btn-sm">
+                <img src="{{ url_for('static', filename='images/nootpad_icon.jpg') }}" style="width:16px;">
+            </button>
+
+            <!-- Editable texts in the middle -->
+            <div class="order-texts" style="display:flex; flex-direction:column; flex:1; gap:2px;">
+                <div id="customerName" contenteditable="false" class="editable-text">Customer Name</div>
+                <div id="orderNumber" contenteditable="false" class="editable-text">Order Number</div>
+            </div>
+            
+            <!-- Right pencil button -->
+            <button id="editPencil" class="btn btn-light btn-sm">
+                <img src="{{ url_for('static', filename='images/pencil_icon.jpg') }}" style="width:16px;">
+            </button>
+        </div>
+
+        <div class="order-dropdowns p-2">
+            <div class="dropdown">
+                <button class="dropdown-btn">Select Table ▼</button>
+                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                    {% for table in tables %}
+                        <div class="dropdown-item" data-id="{{ table.Table_db_id }}" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                            <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
+                            Table {{ table.Table_number }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-btn" data-default-text="Order Type">Order Type ▼</button>
+                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000;">
+                    <div class="dropdown-item" data-id="dine_in" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
+                        Dine_in
+                    </div>
+                    <div class="dropdown-item" data-id="takeaway" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
+                        Takeaway
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="order-display-screens" style="display:flex; flex-direction:column; gap:10px; margin-top:0px;">
+            <!-- Display Screen 1 (twice as big) -->
+            <div class="display-screen display-screen-1">
+                <div id="orderItems" style="display:flex; flex-direction:column; gap:5px;">
+                      <!-- Selected products will appear here -->
+                 </div>
+            </div>
+
+            <!-- Display Screen 2 -->
+            <div class="display-screen display-screen-2">
+                <div class="billing-summary">
+                    
+                    <div class="billing-row">
+                        <span>Subtotal</span>
+                        <span class="amount">$</span>
+                    </div>
+
+                    <div class="billing-row">
+                        <span>Tax (10%)</span>
+                        <span id="taxAmount" class="amount1">$0.00</span>
+                    </div>
+
+                    <div class="billing-row">
+                            <span>Discount</span>
+                            <span id="discountDisplay" class="amount">0%</span>
+                    </div>
+
+                    <div class="billing-separator"></div>
+
+                    <div class="billing-row total">
+                        <span>TOTAL</span>
+                        <span id="totalAmount" class="amount">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="order-button-container">
+
+            <!-- TOP ROW -->
+            <div class="button-top">
+                <button class="pill-btn_order">Promo-code</button>
+                <button class="pill-btn_order">QRS</button>
+            </div>
+
+            <!-- BOTTOM ROW -->
+            <div class="button-bottom">
+                <button class="big-action-btn">PLACE ORDER</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar d-flex align-items-center">
+        <div id="menuToggle" class="menu-icon">&#9776;</div>
+        <div class="date-box ms-3 top-bar-item">
+           <button class="icon-button">
+                <img src="{{ url_for('static', filename='images/calendar_icon.jpg') }}" 
+                    alt="date_icon" 
+                    class="icon-img">
+           </button>
+          <span id="dateText">--/--/----</span>
+        </div>
+
+        <div class="time-box ms-3 top-bar-item">
+            <button class="icon-button">
+                <img src="{{ url_for('static', filename='images/clock_icon.jpg') }}" 
+                    alt="date_icon" 
+                    class="icon-img">
+           </button>
+            <span id="timeText">--:--:--</span>
+        </div>
+        <div id="orderToggle" class="ms-auto open-order top-bar-item">Open Order</div>
+    </div>
+
+    <!-- BUTTON CONTAINER -->
+    <div id="buttonsContainer" class="buttons-container">
+        <button class="dashboard-btn">
+            <img src="{{ url_for('static', filename='images/menu_icon.png') }}" alt="All Menu" class="btn-icon"> ALL_Menu
+        </button>
+        <button class="dashboard-btn">
+            <img src="{{ url_for('static', filename='images/bread_icon.png') }}" alt="Breads" class="btn-icon"> Breads
+        </button>
+        <button class="dashboard-btn">
+            <img src="{{ url_for('static', filename='images/cake_icon.png') }}" alt="Cakes" class="btn-icon"> Cakes
+        </button>
+        <button class="dashboard-btn">
+            <img src="{{ url_for('static', filename='images/donut_icon.png') }}" alt="Donuts" class="btn-icon"> Donuts
+        </button>
+        <button class="dashboard-btn">
+            <img src="{{ url_for('static', filename='images/pastry_icon.png') }}" alt="Pastries" class="btn-icon"> Pastries
+        </button>
+        <button class="dashboard-btn">
+            <img src="{{ url_for('static', filename='images/sandwich_icon.png') }}" alt="Sandwiches" class="btn-icon"> Sandwiches
+        </button>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div id="searchContainer" class="search-container mt-3">
+        <div class="input-group">
+            <input type="text" id="searchInput" placeholder="Search for something sweet on your mind" class="form-control">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+        </div>
+    </div>
+  
+     <!-- Product Display -->
+    <div class="product-display">
+    {% for item in products %}
+        <div class="product-card"
+            data-description="{{ item['description'] }}"
+            data-name="{{ item['good_name'] }}"
+            data-price="{{ item['price'] }}">
+
+            <img src="{{ url_for('static', filename=item.image_path.replace('\\','/').split('static/')[1]) }}"
+                alt="{{ item.good_name }}">
+
+            <div class="product-name">{{ item.good_name }}</div>
+            <div class="product-price">${{ item.price }}</div>
+        </div>
+    {% endfor %}
+    </div>
+
+<!-- PRODUCT DETAIL MODAL -->
+    <div id="productModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+        <div class="modal-content" style="background:white; border-radius:10px; max-width:400px; width:90%; padding:20px; position:relative;">
+            <span id="closeModal" style="position:absolute; top:10px; right:15px; font-size:20px; cursor:pointer;">&times;</span>
+
+            <img id="modalImage" src="" alt="Product Image" style="width:80%; height:150px; object-fit:cover; display:block; margin:0 auto 15px auto; border-radius:8px;">
+
+            <!-- UPDATED: Product description now displays from DB -->
+            <p id="modalDescription" style="margin-bottom:15px; font-size:14px; color:#333;"></p>
+
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:15px;">
+                <button id="decreaseQty" style="padding:5px 10px;">-</button>
+                <span id="qtyCounter" style="font-weight:bold; min-width:20px; text-align:center;">1</span>
+                <button id="increaseQty" style="padding:5px 10px;">+</button>
+            </div>
+
+            <button id="selectBtn" style="width:100%; padding:10px; background:#0d6efd; color:white; border:none; border-radius:8px; cursor:pointer;">
+                Select
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+    // DATE & TIME
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('dateText').textContent = now.toLocaleDateString();
+            document.getElementById('timeText').textContent = now.toLocaleTimeString();
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // ELEMENTS
+        const orderToggle = document.getElementById('orderToggle');
+        const sidebar = document.getElementById('sidebar');
+        const orderContainer = document.getElementById('orderContainer');
+        const menuToggle = document.getElementById('menuToggle');
+        const buttonsContainer = document.getElementById('buttonsContainer');
+        const searchContainer = document.getElementById('searchContainer');
+        const productDisplay = document.querySelector('.product-display');
+        const buttons = document.querySelectorAll('.dashboard-btn');
+        const topBarItems = document.querySelectorAll('.top-bar-item');
+        let tempOrderItems = [];
+        // SHIFT FUNCTION
+        function shiftUI(shiftSidebar, shiftOrder) {
+            if (shiftSidebar) {
+                buttonsContainer.classList.add('shifted-left');
+                searchContainer.classList.add('shifted-left');
+                topBarItems.forEach(el => el.classList.add('shifted-left-time'));
+            } else {
+                buttonsContainer.classList.remove('shifted-left');
+                searchContainer.classList.remove('shifted-left');
+                topBarItems.forEach(el => el.classList.remove('shifted-left-time'));
+            }
+
+            if (shiftOrder) {
+                buttonsContainer.classList.add('shifted-right');
+                searchContainer.classList.add('shifted-right');
+                productDisplay.classList.add('shifted-right');
+                topBarItems.forEach(el => el.classList.add('shifted-right-time'));
+            } else {
+                buttonsContainer.classList.remove('shifted-right');
+                searchContainer.classList.remove('shifted-right');
+                productDisplay.classList.remove('shifted-right');
+                topBarItems.forEach(el => el.classList.remove('shifted-right-time'));
+            }
+
+            if (shiftSidebar || shiftOrder) {
+                buttons.forEach(btn => btn.style.flex = '0 1 auto');
+            } else {
+                buttons.forEach(btn => btn.style.flex = '1');
+            }
+        }
+
+        // SIDEBAR TOGGLE
+        menuToggle.addEventListener('click', function() {
+            orderContainer.classList.remove("active"); 
+            orderToggle.textContent = "Open Order";
+            orderToggle.classList.remove("close-order");
+            orderToggle.classList.add("open-order");
+
+            sidebar.classList.toggle('active');
+            shiftUI(sidebar.classList.contains('active'), false);
+        });
+    
+        // ORDER TOGGLE
+        orderToggle.addEventListener('click', () => {
+            if (orderToggle.textContent === "Open Order") {
+                orderContainer.classList.add("active");
+                orderToggle.textContent = "Close Order";
+                orderToggle.classList.remove("open-order");
+                orderToggle.classList.add("close-order");
+
+                sidebar.classList.remove('active');
+                shiftUI(false, true);
+            } else {
+                orderContainer.classList.remove("active");
+                orderToggle.textContent = "Open Order";
+                orderToggle.classList.remove("close-order");
+                orderToggle.classList.add("open-order");
+
+                shiftUI(false, false);
+
+               
+        // ===== RESET DISPLAY SCREEN 1 =====
+        orderItems.innerHTML = "";  // clears all selected products
+
+        // ===== RESET TEMP JSON =====
+        tempOrderItems = [];
+
+        // ===== RESET SUBTOTAL =====
+        document.querySelector('.subtotal-amount').textContent = '$0.00';
+            }
+        });
+
+        // CLOSE SIDEBAR ON CLICK
+        sidebar.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            shiftUI(false, false);
+        });
+
+        // DROPDOWN FUNCTIONALITY
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.dropdown-btn').forEach(btn => {
+                if (!btn.dataset.defaultText) {
+                    btn.dataset.defaultText = btn.textContent.replace(' ▼','');
+                }
+
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const content = this.nextElementSibling;
+                    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+                });
+            });
+
+            function setupDropdownItems(dropdownItems) {
+                dropdownItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const dropdownBtn = this.closest('.dropdown').querySelector('.dropdown-btn');
+                        dropdownBtn.textContent = this.textContent + ' ▼';
+                        dropdownBtn.dataset.selectedId = this.dataset.id;
+
+                        this.parentElement.querySelectorAll('.dot').forEach(dot => dot.style.background = 'transparent');
+                        this.querySelector('.dot').style.background = 'lightblue';
+                    });
+
+                    item.addEventListener('dblclick', function(e) {
+                        e.stopPropagation();
+                        const dropdownBtn = this.closest('.dropdown').querySelector('.dropdown-btn');
+                        dropdownBtn.textContent = dropdownBtn.dataset.defaultText + ' ▼';
+                        delete dropdownBtn.dataset.selectedId;
+                        this.querySelector('.dot').style.background = 'transparent';
+                    });
+                });
+            }
+
+            document.querySelectorAll('.dropdown-content').forEach(content => {
+                setupDropdownItems(content.querySelectorAll('.dropdown-item'));
+            });
+
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.dropdown-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+            });
+        });
+
+        // EDITABLE ORDER TEXTS
+        document.addEventListener('DOMContentLoaded', function() {
+            const pencilBtn = document.getElementById('editPencil');
+            const customerName = document.getElementById('customerName');
+            const orderNumber = document.getElementById('orderNumber');
+
+            const defaultCustomerName = customerName.textContent;
+            const defaultOrderNumber = orderNumber.textContent;
+
+            let isEditing = false;
+
+            pencilBtn.addEventListener('click', function() {
+                if (!isEditing) {
+                    isEditing = true;
+                    customerName.contentEditable = "true";
+                    orderNumber.contentEditable = "true";
+                    customerName.style.borderBottom = "1px dashed #000";
+                    orderNumber.style.borderBottom = "1px dashed #000";
+                    customerName.focus();
+                } else {
+                    isEditing = false;
+                    customerName.contentEditable = "false";
+                    orderNumber.contentEditable = "false";
+                    customerName.style.borderBottom = "none";
+                    orderNumber.style.borderBottom = "none";
+
+                    if (customerName.textContent.trim() === "") customerName.textContent = defaultCustomerName;
+                    if (orderNumber.textContent.trim() === "") orderNumber.textContent = defaultOrderNumber;
+                }
+            });
+        });
+
+        // PRODUCT MODAL & ORDER BAR INTEGRATION
+        const productCards = document.querySelectorAll('.product-card');
+        const productModal = document.getElementById('productModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalDescription = document.getElementById('modalDescription');
+        const qtyCounter = document.getElementById('qtyCounter');
+        const decreaseQty = document.getElementById('decreaseQty');
+        const increaseQty = document.getElementById('increaseQty');
+        const selectBtn = document.getElementById('selectBtn');
+        const orderItems = document.getElementById('orderItems'); // MUST EXIST IN HTML
+
+        let currentQty = 1;
+        let selectedProduct = null;
+
+        // OPEN MODAL
+        productCards.forEach(card => {
+            card.addEventListener('click', () => {
+                modalImage.src = card.querySelector('img').src;
+                modalDescription.textContent = card.dataset.description;
+                currentQty = 1;
+                qtyCounter.textContent = currentQty;
+
+                selectedProduct = {
+                    name: card.dataset.name,
+                    price: card.dataset.price,
+                    imageSrc: card.querySelector('img').src
+                };
+
+                productModal.style.display = 'flex';
+            });
+        });
+
+        // CLOSE MODAL
+        closeModal.addEventListener('click', () => {
+            productModal.style.display = 'none';
+            selectedProduct = null;
+        });
+
+        // QUANTITY CONTROLS
+        increaseQty.addEventListener('click', () => {
+            currentQty++;
+            qtyCounter.textContent = currentQty;
+        });
+        decreaseQty.addEventListener('click', () => {
+            if (currentQty > 1) {
+                currentQty--;
+                qtyCounter.textContent = currentQty;
+            }
+        });
+
+        // SELECT PRODUCT
+        selectBtn.addEventListener('click', () => {
+            if (!selectedProduct) return;
+
+            const priceNum = Number(selectedProduct.price); // force number
+            const totalPrice = (priceNum * currentQty).toFixed(2);
+
+            const itemRow = document.createElement('div');
+            itemRow.style.display = 'flex';
+            itemRow.style.alignItems = 'center';
+            itemRow.style.gap = '10px';
+            itemRow.style.marginBottom = '8px';
+
+            itemRow.innerHTML = `
+                <img src="${selectedProduct.imageSrc}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">
+                <div style="flex:1;">
+                    <div style="font-weight:bold;">${selectedProduct.name}</div>
+                    <div style="color:green;">$${totalPrice}</div>
+                </div>
+                <div>Qty: ${currentQty}</div>
+            `;
+
+            orderItems.appendChild(itemRow);
+
+            tempOrderItems.push({
+                name: selectedProduct.name,
+                price: priceNum,
+                quantity: currentQty,
+                sub_total: priceNum * currentQty, // numeric value
+                imageSrc: selectedProduct.imageSrc
+            });
+
+            productModal.style.display = 'none';
+            selectedProduct = null;
+
+            updateSubtotal();
+            updateTaxDisplay();
+            updateTotal();
+        });
+        
+        function updateSubtotal() {
+            const subtotalEl = document.querySelector('.billing-row span.amount'); // first .amount span
+            const subtotal = tempOrderItems.reduce((acc, item) => acc + item.sub_total, 0);
+            subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+        }
+
+        function calculateTax(subtotal) {
+                const taxRate = 0.1; // 10%
+                return subtotal * taxRate;
+        }
+
+        function updateTaxDisplay() {
+            const subtotal = tempOrderItems.reduce((acc, item) => acc + item.sub_total, 0);
+            const tax = calculateTax(subtotal);
+
+            // Ensure tax is always a number and formatted to 2 decimals
+            document.getElementById('taxAmount').textContent = `$${Number(tax.toFixed(2))}`;
+        }
+
+            // PROMO-CODE BUTTON FUNCTIONALITY
+        const promoBtn = document.querySelector('.pill-btn_order'); // assumes first button is Promo-code
+        const discountDisplay = document.getElementById('discountDisplay');
+
+        promoBtn.addEventListener('click', () => {
+            let discountPercent = prompt("Enter discount percentage (e.g., 10 for 10%)");
+            
+            if (discountPercent !== null) {
+                discountPercent = Number(discountPercent);
+                
+                if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+                    alert("Please enter a valid number between 0 and 100");
+                    return;
+                }
+
+                // Show the discount percentage
+                discountDisplay.textContent = discountPercent + "%";
+
+                // Store discount for future use (optional)
+                tempOrderItems.discountPercent = discountPercent;
+            }
+        });
+
+        function updateTotal() {
+            const subtotal = tempOrderItems.reduce((acc, item) => acc + item.sub_total, 0);
+
+            const tax = calculateTax(subtotal);
+
+            const discountPercent = Number(tempOrderItems.discountPercent || 0);
+            const discountAmount = subtotal * (discountPercent / 100);
+
+            const total = subtotal + tax - discountAmount;
+
+            document.getElementById('totalAmount').textContent = `$${total.toFixed(2)}`;
+        }
+
+        const placeOrderBtn = document.querySelector('.big-action-btn');
+        const orderNumberDiv = document.getElementById('orderNumber');
+        const orderTypeBtn = document.querySelector('.dropdown-btn[data-default-text="Order Type"]');
+        const customerNameDiv = document.getElementById('customerName');
+        const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]');
+
+        placeOrderBtn.addEventListener('click', () => {
+            const orderNumber = orderNumberDiv.textContent.trim();
+            const orderType = orderTypeBtn.dataset.selectedId; // dine_in or takeaway
+            const customerName = document.getElementById('customerName').textContent.trim();
+            const tableBtn = document.querySelector('.dropdown-btn'); // your table dropdown button
+            const tableId = tableBtn.dataset.selectedId;
+
+            // Get selected products from your actual display screen
+            const orderItemsDivs = document.querySelectorAll('#orderItems div');
+            const selectedProducts = Array.from(orderItemsDivs).map(d => d.textContent.trim());
+
+            if (!orderNumber || orderNumber === 'Order Number') {
+                alert('Please enter Order Number');
+                return;
+            }
+            if (!orderType) {
+                alert('Please select Order Type');
+                return;
+            }
+            if (!customerName || customerName === 'Customer Name') {
+                alert('Please enter Customer Name');
+                return;
+            }
+            if (!tableId) {
+                alert('Please select a table');
+                return;
+            }
+            if (selectedProducts.length === 0) {
+                alert('Please select at least one product');
+                return;
+            }
+
+            fetch('/place_order_table', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order_number: orderNumber,
+                    order_type: orderType,
+                    customer_name: customerName,
+                    table_id: tableId,
+                    selected_products: selectedProducts
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Order placed successfully ✅');
+                } else {
+                    alert('Failed to place order ❌: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Server error ❌');
+            });
+        });
+
+
+
+</script>
+
+</body>
+</html>
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
