@@ -299,9 +299,6 @@
 
         </div>
 
-
-
-
     <!-- SCRIPT -->
     <script>
     // DATE & TIME
@@ -633,17 +630,14 @@
         const customerNameDiv = document.getElementById('customerName');
         const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]');
 
-        placeOrderBtn.addEventListener('click', () => {
+       placeOrderBtn.addEventListener('click', () => {
             const orderNumber = orderNumberDiv.textContent.trim();
             const orderType = orderTypeBtn.dataset.selectedId; // dine_in or takeaway
             const customerName = document.getElementById('customerName').textContent.trim();
             const tableBtn = document.querySelector('.dropdown-btn'); // your table dropdown button
             const tableId = tableBtn.dataset.selectedId;
 
-            // Get selected products from your actual display screen
-            const orderItemsDivs = document.querySelectorAll('#orderItems div');
-            const selectedProducts = Array.from(orderItemsDivs).map(d => d.textContent.trim());
-
+            // Validation
             if (!orderNumber || orderNumber === 'Order Number') {
                 alert('Please enter Order Number');
                 return;
@@ -660,11 +654,8 @@
                 alert('Please select a table');
                 return;
             }
-            if (selectedProducts.length === 0) {
-                alert('Please select at least one product');
-                return;
-            }
 
+            // Send only the required data to backend
             fetch('/place_order_table', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -672,8 +663,7 @@
                     order_number: orderNumber,
                     order_type: orderType,
                     customer_name: customerName,
-                    table_id: tableId,
-                    selected_products: selectedProducts
+                    table_id: tableId
                 })
             })
             .then(res => res.json())
@@ -690,7 +680,6 @@
             });
         });
 
-   
         const drawer = document.getElementById('trackDrawer');
         const handle = document.getElementById('trackHandle');
         const symbol = document.getElementById('trackSymbol');
@@ -704,10 +693,6 @@
             symbol.textContent = open ? '−' : '+';
             symbol.style.color = open ? '#dc2626' : '#2563eb';
         });
-
-
-
-
 
     </script>
 

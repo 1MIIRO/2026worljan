@@ -246,20 +246,14 @@ def activity_Order_history():
 
 @app.route('/place_order_table', methods=['POST'])
 def place_order_table():
-    if 'user_id' not in session:
-        return jsonify({"success": False, "error": "User not logged in"})
-
     data = request.get_json()
     order_number = data.get('order_number')
     order_type = data.get('order_type')  # dine_in / takeaway
-    customer_name = data.get('customer_name')
-    table_id = data.get('table_id')  # Table_db_id from dropdown
-    selected_products = data.get('selected_products', [])  # array of good names
+    customer_name = data.get('customer_name')  # from <div id="customerName">
+    table_id = data.get('table_id')  # from dropdown
 
-    if not order_number or not order_type or not customer_name:
+    if not order_number or not order_type:
         return jsonify({"success": False, "error": "Missing required fields"})
-    if not selected_products:
-        return jsonify({"success": False, "error": "No products selected"})
 
     try:
         conn = get_connection()
@@ -278,32 +272,12 @@ def place_order_table():
             VALUES (%s, %s)
         """, (order_db_id, order_type))
 
-        # 3️⃣ Insert into customer_orders_verification
+        # 3️⃣ Insert into customer_ORDER_STATUS
+        # Default order_status = 'All done'
         cursor.execute("""
-            INSERT INTO customer_orders_verification 
-            (customer_name_order, order_db_id, user_id, order_table_location)
-            VALUES (%s, %s, %s, %s)
-        """, (customer_name, order_db_id, session['user_id'], table_id))
-
-        # Get the newly inserted customer_order_id
-        cursor.execute("""
-            SELECT customer_order_id 
-            FROM customer_orders_verification 
-            WHERE order_db_id=%s
-        """, (order_db_id,))
-        customer_order_id = cursor.fetchone()[0]
-
-        # 4️⃣ Insert selected goods into customer_goods_purchased
-        for good_name in selected_products:
-            # Get good_number from products table
-            cursor.execute("SELECT good_number FROM products WHERE good_name=%s", (good_name,))
-            row = cursor.fetchone()
-            if row:
-                good_number = row[0]
-                cursor.execute("""
-                    INSERT INTO customer_goods_purchased (customer_order_id, good_number)
-                    VALUES (%s, %s)
-                """, (customer_order_id, good_number))
+            INSERT INTO customer_ORDER_STATUS (customer_name, customer_table,  order_db_id,order_status )
+            VALUES (%s, %s, %s)
+        """, (customer_name, table_id,order_db_id, 'All done'))
 
         conn.commit()
         cursor.close()
