@@ -21,11 +21,7 @@ VALUES
 ('sara_lee', 'Sara Lee', 'sara!@#', 'Waiter'),
 ('alex_kim', 'Alex Kim', 'alexpass', 'Receptionist');
 
-
-
-
-
-
+*********************************************************************************
 
 products
 
@@ -154,7 +150,7 @@ products
 			('Boston Cream Doughnut', 7.00, 'static/food_menu_images/boston_cream_donut_image.jpg',
 			 'A classic Boston Cream Doughnut filled with creamy custard and topped with a chocolate glaze.');
 
-
+********************************************************************************************************************8
 
 products_type
 
@@ -238,7 +234,7 @@ products_type
 		|               25 |          25 | doughnut  |
 		+------------------+-------------+-----------+
 		25 rows in set (0.00 sec)
-
+*****************************************************************************************************
 tables
 
 
@@ -364,7 +360,7 @@ tables
 					|          50 | T-50         | 4 persons      |
 					+-------------+--------------+----------------+
 
-
+***********************************************************************************************************
 Table_floor
 
 				CREATE TABLE table_floor (
@@ -498,6 +494,8 @@ Table_floor
 				+------------+-------------+------------+
 				50 rows in set (0.00 sec)
 
+******************************************************************************
+table_reservations
 
 CREATE TABLE table_reservations (
     table_reservation_number INT AUTO_INCREMENT PRIMARY KEY,
@@ -650,14 +648,7 @@ VALUES
 50 rows in set (0.00 sec)	
 		
 		
-		
-		
-		
-		
-		
-		
-
-
+******************************************************************************		
 order_table
 
 		"order_db_id": primary-key auto_increment
@@ -707,132 +698,103 @@ order_types
 
 ************************************************************
 
-CREATE TABLE customer_orders_verification (
-    customer_order_id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_name_order VARCHAR(100) NOT NULL,
-    order_db_id INT NOT NULL,
-    user_id INT NOT NULL,
-    order_table_location INT NULL,
-    
-    CONSTRAINT fk_customer_orders_order
-        FOREIGN KEY (order_db_id)
-        REFERENCES order_table(order_db_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
 
-    CONSTRAINT fk_customer_orders_user
-        FOREIGN KEY (user_id)
-        REFERENCES user(user_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-
-    CONSTRAINT fk_customer_orders_table_location
-        FOREIGN KEY (order_table_location)
-        REFERENCES tables(Table_db_id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE
-);
-
-
-		+----------------------+--------------+------+-----+---------+----------------+
-		| Field                | Type         | Null | Key | Default | Extra          |
-		+----------------------+--------------+------+-----+---------+----------------+
-		| customer_order_id    | int          | NO   | PRI | NULL    | auto_increment |
-		| customer_name_order  | varchar(100) | NO   |     | NULL    |                |
-		| order_db_id          | int          | NO   | MUL | NULL    |                |
-		| user_id              | int          | NO   | MUL | NULL    |                |
-		| order_table_location | int          | YES  | MUL | NULL    |                |
-		+----------------------+--------------+------+-----+---------+----------------+
-5 rows in set (0.00 sec)
-
-****************************************************************************************
-customer_goods_purchased
-
-			+-----------------------------+------+------+-----+---------+----------------+
-			| Field                       | Type | Null | Key | Default | Extra          |
-			+-----------------------------+------+------+-----+---------+----------------+
-			| customer_goods_purchased_id | int  | NO   | PRI | NULL    | auto_increment |
-			| customer_order_id           | int  | NO   | MUL | NULL    |                |
-			| good_number                 | int  | NO   | MUL | NULL    |                |
-			+-----------------------------+------+------+-----+---------+----------------+
-			3 rows in set (0.00 sec)
-
-			CREATE TABLE customer_goods_purchased (
-				customer_goods_purchased_id INT AUTO_INCREMENT PRIMARY KEY,
-				customer_order_id INT NOT NULL,
-				good_number INT NOT NULL,
-
-				CONSTRAINT fk_customer_goods_purchased_order
-					FOREIGN KEY (customer_order_id)
-					REFERENCES customer_orders_verification(customer_order_id)
+customer_ORDER_STATUS
+	CREATE TABLE customer_ORDER_STATUS (
+		Customer_order_status_id INT AUTO_INCREMENT PRIMARY KEY,
+		customer_name VARCHAR(255) NOT NULL,
+		customer_table  int,
+		order_db_id  INT,
+		order_status ENUM('On kitchen hand', 'All done', 'To be served') NOT NULL,
+		CONSTRAINT fk_customer_table FOREIGN KEY (customer_table)
+			REFERENCES tables(Table_db_id)
+			ON DELETE SET NULL
+			ON UPDATE CASCADE,
+        
+		CONSTRAINT fk_order_db_id
+					FOREIGN KEY (order_db_id)
+					REFERENCES order_table(order_db_id)
 					ON DELETE CASCADE
-					ON UPDATE CASCADE,
-
-				CONSTRAINT fk_customer_goods_purchased_product
-					FOREIGN KEY (good_number)
-					REFERENCES products(good_number)
-					ON DELETE RESTRICT
 					ON UPDATE CASCADE
-			);
+	
+	);
 
-*****************************************************************************
++--------------------------+---------------------------------------------------+------+-----+---------+----------------+
+| Field                    | Type                                              | Null | Key | Default | Extra          |
++--------------------------+---------------------------------------------------+------+-----+---------+----------------+
+| Customer_order_status_id | int                                               | NO   | PRI | NULL    | auto_increment |
+| customer_name            | varchar(255)                                      | NO   |     | NULL    |                |
+| customer_table           | int                                               | YES  | MUL | NULL    |                |
+| order_db_id              | int                                               | YES  | MUL | NULL    |                |
+| order_status             | enum('On kitchen hand','All done','To be served') | NO   |     | NULL    |                |
++--------------------------+---------------------------------------------------+------+-----+---------+----------------+
+5 rows in set (0.01 sec)
 
-customer_order_status
-
-customer_order_status_id - primary_key auto_increment 
-customer_order_id  foriegn-key from from customer_orders_verification
-customer_order_status
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-********************************************************************************
+*********************************************************************************8
 
 
 
 
 
- DELETE FROM order_table
-    WHERE order_db_id = 4;
 
 
-+--------------------------------------------+
-| Tables_in_bakery_busness                   |
-+--------------------------------------------+
-| customer_goods_purchased                   |
-| customer_order_payments                    |
-| customer_orders_verification               |
-| order_completion_status_time_of_completion |
-| order_payments_verification                |
-| order_table                                |
-| order_types                                |
-| products                                   |
-| products_type                              |
-| table_floor                                |
-| table_reservations                         |
-| tables                                     |
-| user                                       |
-+--------------------------------------------+
 
 
-	 
 
-	   
-	   
-	   
-	   
+
+
+
+database of orders 
+order_id  , order_identification_number , order_date ,order_time ,order_status , order_state ,customer_name, goods bought , quantities , total bill
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DROP TABLE customer_orders_verification;
+
+
+
++--------------------------+
+| Tables_in_bakery_busness |
++--------------------------+
+| order_table              |
+| order_types              |
+| products                 |
+| products_type            |
+| table_floor              |
+| table_reservations       |
+| tables                   |
+| user                     |
++--------------------------+
+
+
+
+
+
+
+
+
+   
 	   
 	   
 	   
