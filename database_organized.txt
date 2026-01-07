@@ -649,103 +649,209 @@ VALUES
 		
 		
 ******************************************************************************		
-order_table
-
-		"order_db_id": primary-key auto_increment
-		"order_number": String 
-		"Dateandtime_ordered":Datetime
-
-		CREATE TABLE order_table (
-			order_db_id INT AUTO_INCREMENT PRIMARY KEY,
-			order_number VARCHAR(50) NOT NULL,
-			Dateandtime_ordered DATETIME NOT NULL
-		);
-
-		+---------------------+-------------+------+-----+---------+----------------+
-		| Field               | Type        | Null | Key | Default | Extra          |
-		+---------------------+-------------+------+-----+---------+----------------+
-		| order_db_id         | int         | NO   | PRI | NULL    | auto_increment |
-		| order_number        | varchar(50) | NO   |     | NULL    |                |
-		| Dateandtime_ordered | datetime    | NO   |     | NULL    |                |
-		+---------------------+-------------+------+-----+---------+----------------+
-		3 rows in set (0.00 sec
-
-************************************************************
-
-order_types
-
-			CREATE TABLE order_types (
-				order_types_id INT AUTO_INCREMENT PRIMARY KEY,
-				order_db_id INT NOT NULL,
-				order_type ENUM('dine_in', 'takeaway') NOT NULL,
-
-				CONSTRAINT fk_order_types_order
-					FOREIGN KEY (order_db_id)
-					REFERENCES order_table(order_db_id)
-					ON DELETE CASCADE
-					ON UPDATE CASCADE
-			);
-
-			+----------------+----------------------------+------+-----+---------+----------------+
-			| Field          | Type                       | Null | Key | Default | Extra          |
-			+----------------+----------------------------+------+-----+---------+----------------+
-			| order_types_id | int                        | NO   | PRI | NULL    | auto_increment |
-			| order_db_id    | int                        | NO   | MUL | NULL    |                |
-			| order_type     | enum('dine_in','takeaway') | NO   |     | NULL    |                |
-			+----------------+----------------------------+------+-----+---------+----------------+
-			3 rows in set (0.00 sec)
-
-
-************************************************************
-
-
-customer_ORDER_STATUS
-	CREATE TABLE customer_ORDER_STATUS (
-		Customer_order_status_id INT AUTO_INCREMENT PRIMARY KEY,
-		customer_name VARCHAR(255) NOT NULL,
-		customer_table  int,
-		order_db_id  INT,
-		order_status ENUM('On kitchen hand', 'All done', 'To be served') NOT NULL,
-		CONSTRAINT fk_customer_table FOREIGN KEY (customer_table)
-			REFERENCES tables(Table_db_id)
-			ON DELETE SET NULL
-			ON UPDATE CASCADE,
-        
-		CONSTRAINT fk_order_db_id
-					FOREIGN KEY (order_db_id)
-					REFERENCES order_table(order_db_id)
-					ON DELETE CASCADE
-					ON UPDATE CASCADE
-	
-	);
-
-+--------------------------+---------------------------------------------------+------+-----+---------+----------------+
-| Field                    | Type                                              | Null | Key | Default | Extra          |
-+--------------------------+---------------------------------------------------+------+-----+---------+----------------+
-| Customer_order_status_id | int                                               | NO   | PRI | NULL    | auto_increment |
-| customer_name            | varchar(255)                                      | NO   |     | NULL    |                |
-| customer_table           | int                                               | YES  | MUL | NULL    |                |
-| order_db_id              | int                                               | YES  | MUL | NULL    |                |
-| order_status             | enum('On kitchen hand','All done','To be served') | NO   |     | NULL    |                |
-+--------------------------+---------------------------------------------------+------+-----+---------+----------------+
-5 rows in set (0.01 sec)
-
-*********************************************************************************8
-
-
-
-
-
-
-
-
-
-
-
 
 
 database of orders 
-order_id  , order_identification_number , order_date ,order_time ,order_status , order_state ,customer_name, goods bought , quantities , total bill
+
+ order_id  , order_identification_number("random genarated number") , order_date ,order_time ,order_status("inprogress,done,cancelled") , order_state("closed,active") , completion_status("on_kitchen hand ,all_done"),customer_name, goods_purchased , total_payment 
+
+
+database of orders 
+ 
+┌──────────────────────────────────────────────┐
+│                  orders                      │
+├──────────────────────────────────────────────┤
+│ PK order_id                                  │
+│    order_identification_number               │
+│ FK user_id (nullable)                        │
+│    order_date                                │
+│    order_time                                │
+│                                              │
+└──────────────────────────────────────────────┘
+	
+
+	
+┌──────────────────────────────────────────────┐
+│               order_type                     │
+├──────────────────────────────────────────────┤
+│ PK order_type_id                             │
+│ FK order_id                                  │
+│    order_type                                │
+│    (dine-in / takeaway)                      │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────┐
+│        customer_order        │
+├──────────────────────────────┤
+│ PK customer_order_id         │
+│ FK order_id                  │
+│    customer_name             │
+└──────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│                order_items                   │
+├──────────────────────────────────────────────┤
+│ PK order_item_id                             │
+│ FK order_id                                  │
+│ FK good_number                               │
+│    quantity                                  │
+│    price_at_order                            │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│        order_completion_status               │
+├──────────────────────────────────────────────┤
+│ PK completion_id                             │
+│ FK order_id                                  │
+│    completed_at                              │
+│    preparation_duration                      │
+│    completion_status                         │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│               order_status                   │
+├──────────────────────────────────────────────┤
+│ PK status_id                                 │
+│ FK order_id                                  │
+│    order_status                              │
+│    status_time                               │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────┐
+│        order_payment         │
+├──────────────────────────────┤
+│ PK payment_id                │
+│ FK order_id                  │
+│    payment_status            │
+│    (paid / unpaid)           │
+└──────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│               order_payment                  │
+├──────────────────────────────────────────────┤
+│ PK payment_id                                │
+│ FK order_id                                  │
+│    amount_paid                               │  
+│    payment_status                            │  -- ENUM: 'paid', 'unpaid', 'partial'
+│    payment_datetime                          │  -- when payment was made
+└──────────────────────────────────────────────┘
+
+
+
+-- Orders table
+CREATE TABLE orders (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_identification_number VARCHAR(20) NOT NULL UNIQUE,
+    user_id INT NULL,
+    order_date DATE NOT NULL,
+    order_time TIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
+);
+
+-- Order Type table
+CREATE TABLE order_type (
+    order_type_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    order_type ENUM('dine-in','takeaway') NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+-- Customer Order table
+CREATE TABLE customer_order (
+    customer_order_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    customer_name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE order_items (
+    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    good_number INT NOT NULL,
+    quantity INT NOT NULL,
+    price_at_order DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
+    FOREIGN KEY (good_number) REFERENCES products(good_number) ON DELETE RESTRICT
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Order Completion Status table
+CREATE TABLE order_completion_status (
+    completion_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    completed_at DATETIME,
+    preparation_duration INT, -- in minutes
+    completion_status ENUM('on_kitchen_hand','all_done') NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+-- Order Status table (timeline)
+CREATE TABLE order_status (
+    status_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    order_status ENUM('inprogress','done','cancelled') NOT NULL,
+    status_time DATETIME NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+-- Simple Order Payment table (paid/unpaid)
+CREATE TABLE order_payment_simple (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    payment_status ENUM('paid','unpaid') NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+-- Detailed Order Payment table
+CREATE TABLE order_payment_detailed (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    amount_paid DECIMAL(10,2) NOT NULL,
+    payment_status ENUM('paid','unpaid','partial') NOT NULL,
+    payment_datetime DATETIME NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+
+
+
+
++--------------------------+
+| Tables_in_bakery_busness |
++--------------------------+
+| customer_order           |
+| order_completion_status  |
+| order_items              |
+| order_payment_detailed   |
+| order_payment_simple     |
+| order_status             |
+| order_type               |
+| orders                   |
+| products                 |
+| products_type            |
+| table_floor              |
+| table_reservations       |
+| tables                   |
+| user                     |
++--------------------------+
+
+
+
+
+
+
 
 
 

@@ -119,11 +119,11 @@
                 <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000;">
                     <div class="dropdown-item" data-id="dine_in" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
                         <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                        Dine_in
+                        dine_in
                     </div>
                     <div class="dropdown-item" data-id="takeaway" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
                         <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                        Takeaway
+                        takeaway
                     </div>
                 </div>
             </div>
@@ -321,6 +321,7 @@
         const buttons = document.querySelectorAll('.dashboard-btn');
         const topBarItems = document.querySelectorAll('.top-bar-item');
         let tempOrderItems = [];
+
         // SHIFT FUNCTION
         function shiftUI(shiftSidebar, shiftOrder) {
             if (shiftSidebar) {
@@ -630,55 +631,114 @@
         const customerNameDiv = document.getElementById('customerName');
         const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]');
 
-       placeOrderBtn.addEventListener('click', () => {
-            const orderNumber = orderNumberDiv.textContent.trim();
-            const orderType = orderTypeBtn.dataset.selectedId; // dine_in or takeaway
-            const customerName = document.getElementById('customerName').textContent.trim();
-            const tableBtn = document.querySelector('.dropdown-btn'); // your table dropdown button
-            const tableId = tableBtn.dataset.selectedId;
+    
+        placeOrderBtn.addEventListener('click', () => {
+    const orderNumber = orderNumberDiv.textContent.trim();
+    const orderType = orderTypeBtn.dataset.selectedId; // dine_in or takeaway
+    const customerName = document.getElementById('customerName').textContent.trim();
+    const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]'); // table dropdown
+    const tableId = tableBtn.dataset.selectedId;
 
-            // Validation
-            if (!orderNumber || orderNumber === 'Order Number') {
-                alert('Please enter Order Number');
-                return;
-            }
-            if (!orderType) {
-                alert('Please select Order Type');
-                return;
-            }
-            if (!customerName || customerName === 'Customer Name') {
-                alert('Please enter Customer Name');
-                return;
-            }
-            if (!tableId) {
-                alert('Please select a table');
-                return;
-            }
+    // --- Validation ---
+    if (!orderNumber || orderNumber === 'Order Number') {
+        alert('Please enter Order Number');
+        return;
+    }
+    if (!orderType) {
+        alert('Please select Order Type');
+        return;
+    }
+    if (!customerName || customerName === 'Customer Name') {
+        alert('Please enter Customer Name');
+        return;
+    }
+    if (!tableId) {
+        alert('Please select a table');
+        return;
+    }
 
-            // Send only the required data to backend
-            fetch('/place_order_table', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order_number: orderNumber,
-                    order_type: orderType,
-                    customer_name: customerName,
-                    table_id: tableId
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Order placed successfully ✅');
-                } else {
-                    alert('Failed to place order ❌: ' + data.error);
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Server error ❌');
-            });
+    // --- Grab product data from Display Screen 1 ---
+    const orderItemsRows = Array.from(orderItems.children); // Display Screen 1 rows
+    if (orderItemsRows.length === 0) {
+        alert('No products selected!');
+        return;
+    }
+
+    const orderItemsData = orderItemsRows.map(row => {
+        let name = '';
+        let price = 0;
+        let quantity = 0;
+
+        const divs = row.querySelectorAll('div');
+        divs.forEach(div => {
+            const text = div.textContent.trim();
+
+            if (text.startsWith('$')) {
+                // This is price
+                price = parseFloat(text.replace('$', '').trim());
+            } else if (text.includes('Qty:')) {
+                // This is quantity
+                quantity = parseInt(text.replace('Qty:', '').trim(), 10);
+            } else if (!name) {
+                // This is name, only if it’s not price
+                name = text;
+            }
         });
+
+        if (!name || isNaN(quantity) || isNaN(price)) {
+            console.error("Invalid item detected:", { name, quantity, price });
+            return null; // skip invalid rows
+        }
+
+        return { good_name: name, quantity, price };
+    }).filter(item => item !== null);
+
+    // --- ALERT for testing: show all items properly ---
+    if (orderItemsData.length === 0) {
+        alert('No valid items found!');
+        return;
+    }
+
+    let alertMsg = "Order Items:\n";
+    orderItemsData.forEach(item => {
+        alertMsg += `good: ${item.good_name}, quantity: ${item.quantity}, price: ${item.price}\n`;
+    });
+    alert(alertMsg); // <-- Shows all items correctly
+
+    // --- Send order + order items to backend ---
+    fetch('/place_order_table', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            order_number: orderNumber,
+            order_type: orderType,
+            customer_name: customerName,
+            table_id: tableId,
+            order_items: orderItemsData
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Order placed successfully ✅');
+
+            // Reset Display Screen 1
+            orderItems.innerHTML = '';
+            tempOrderItems = [];
+            document.querySelector('.billing-row span.amount').textContent = '$0.00';
+            document.getElementById('taxAmount').textContent = '$0.00';
+            document.getElementById('totalAmount').textContent = '$0.00';
+        } else {
+            alert('Failed to place order ❌: ' + data.error);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Server error ❌');
+    });
+});
+
+
 
         const drawer = document.getElementById('trackDrawer');
         const handle = document.getElementById('trackHandle');

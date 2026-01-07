@@ -246,46 +246,55 @@ def activity_Order_history():
 
 @app.route('/place_order_table', methods=['POST'])
 def place_order_table():
-    data = request.get_json()
-    order_number = data.get('order_number')
-    order_type = data.get('order_type')  # dine_in / takeaway
-    customer_name = data.get('customer_name')  # from <div id="customerName">
-    table_id = data.get('table_id')  # from dropdown
+    if 'user_id' not in session:
+        return jsonify({"success": False, "error": "User not logged in"})
 
-    if not order_number or not order_type:
+    data = request.get_json()
+
+    order_number = data.get('order_number')
+    order_type = data.get('order_type')        # 'dine-in' | 'takeaway'
+    customer_name = data.get('customer_name')
+    table_id = data.get('table_id')
+                    
+
+    if not order_number or not order_type or not customer_name:
         return jsonify({"success": False, "error": "Missing required fields"})
+
+    user_id = session['user_id']
+    current_date = datetime.now().date()
+    current_time = datetime.now().time()
 
     try:
         conn = get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        # 1️⃣ Insert into order_table
+        # 1️⃣ orders
         cursor.execute("""
-            INSERT INTO order_table (order_number, Dateandtime_ordered)
-            VALUES (%s, %s)
-        """, (order_number, datetime.now()))
-        order_db_id = cursor.lastrowid
+            INSERT INTO orders (order_identification_number, user_id, order_date, order_time)
+            VALUES (%s, %s, %s, %s)
+        """, (order_number, user_id, current_date, current_time))
+        order_id = cursor.lastrowid
 
-        # 2️⃣ Insert into order_types
+        # 2️⃣ order_type
         cursor.execute("""
-            INSERT INTO order_types (order_db_id, order_type)
-            VALUES (%s, %s)
-        """, (order_db_id, order_type))
-
-        # 3️⃣ Insert into customer_ORDER_STATUS
-        # Default order_status = 'All done'
-        cursor.execute("""
-            INSERT INTO customer_ORDER_STATUS (customer_name, customer_table,  order_db_id,order_status )
+            INSERT INTO order_type (order_id, order_type, table_id)
             VALUES (%s, %s, %s)
-        """, (customer_name, table_id,order_db_id, 'All done'))
+        """, (order_id, order_type, table_id))
 
+        # 3️⃣ customer_order
+        cursor.execute("""
+            INSERT INTO customer_order (order_id, customer_name)
+            VALUES (%s, %s)
+        """, (order_id, customer_name))
+
+       
         conn.commit()
         cursor.close()
         conn.close()
 
-        return jsonify({"success": True})
+        return jsonify({"success": True, "order_id": order_id})
 
-    except Error as e:
+    except Exception as e:
         print("Database Error:", e)
         return jsonify({"success": False, "error": str(e)})
 
