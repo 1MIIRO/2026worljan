@@ -776,18 +776,6 @@ CREATE TABLE order_items (
 );
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 -- Order Completion Status table
 CREATE TABLE order_completion_status (
     completion_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -797,6 +785,27 @@ CREATE TABLE order_completion_status (
     completion_status ENUM('on_kitchen_hand','all_done') NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- Order Status table (timeline)
 CREATE TABLE order_status (
@@ -846,11 +855,6 @@ CREATE TABLE order_payment_detailed (
 | tables                   |
 | user                     |
 +--------------------------+
-
-
-
-
-
 
 
 

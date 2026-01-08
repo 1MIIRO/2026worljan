@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, render_template_stri
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Required for sessions
@@ -252,12 +253,12 @@ def place_order_table():
     data = request.get_json()
 
     order_number = data.get('order_number')
-    order_type = data.get('order_type')        # 'dine-in' | 'takeaway'
+    order_type_val = data.get('order_type')        # 'dine-in' | 'takeaway'
     customer_name = data.get('customer_name')
     table_id = data.get('table_id')
-                    
+    order_items = data.get('order_items')          # List of {good_name, quantity, price_at_order}
 
-    if not order_number or not order_type or not customer_name:
+    if not order_number or not order_type_val or not customer_name or not table_id or not order_items:
         return jsonify({"success": False, "error": "Missing required fields"})
 
     user_id = session['user_id']
@@ -268,26 +269,44 @@ def place_order_table():
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # 1️⃣ orders
+        # 1️⃣ Insert into orders table
         cursor.execute("""
             INSERT INTO orders (order_identification_number, user_id, order_date, order_time)
             VALUES (%s, %s, %s, %s)
         """, (order_number, user_id, current_date, current_time))
         order_id = cursor.lastrowid
 
-        # 2️⃣ order_type
+        # 2️⃣ Insert into order_type table
         cursor.execute("""
             INSERT INTO order_type (order_id, order_type, table_id)
             VALUES (%s, %s, %s)
-        """, (order_id, order_type, table_id))
+        """, (order_id, order_type_val, table_id))
 
-        # 3️⃣ customer_order
+        # 3️⃣ Insert into customer_order table
         cursor.execute("""
             INSERT INTO customer_order (order_id, customer_name)
             VALUES (%s, %s)
         """, (order_id, customer_name))
 
-       
+        # 4️⃣ Insert each item into order_items table
+        for item in order_items:
+            good_name = item['good_name']
+            quantity = item['quantity']
+            price_at_order = item['price_at_order']
+
+            # Get good_number from products table
+            cursor.execute("SELECT good_number FROM products WHERE good_name = %s", (good_name,))
+            good_row = cursor.fetchone()
+            if not good_row:
+                # Skip items not found in products table
+                continue
+            good_number = good_row['good_number']
+
+            cursor.execute("""
+                INSERT INTO order_items (order_id, good_number, quantity, price_at_order)
+                VALUES (%s, %s, %s, %s)
+            """, (order_id, good_number, quantity, price_at_order))
+
         conn.commit()
         cursor.close()
         conn.close()
@@ -298,6 +317,52 @@ def place_order_table():
         print("Database Error:", e)
         return jsonify({"success": False, "error": str(e)})
 
+@app.route('/trackhome_orders')
+def trackhome_orders():
+    if 'user_id' not in session:
+        return jsonify([])  # empty if not logged in
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Your original query with joins
+    query = """
+        SELECT 
+            co.customer_name,
+            t.Table_number,
+            ot.order_type,
+            o.order_time
+        FROM orders o
+        LEFT JOIN customer_order co ON o.order_id = co.order_id
+        LEFT JOIN order_type ot ON o.order_id = ot.order_id
+        LEFT JOIN tables t ON ot.table_id = t.Table_db_id
+        ORDER BY o.order_time DESC
+    """
+
+    cursor.execute(query)
+    orders_raw = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Convert datetime/timedelta to string to be JSON serializable
+    orders = []
+    for order in orders_raw:
+        converted_order = {}
+        for key, value in order.items():
+            if isinstance(value, datetime):
+                value = value.strftime("%Y-%m-%d %H:%M:%S")
+            elif isinstance(value, timedelta):
+                total_seconds = int(value.total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                value = f"{hours:02}:{minutes:02}:{seconds:02}"
+            converted_order[key] = value
+        orders.append(converted_order)
+
+    return jsonify(orders)
+
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -306,3 +371,44 @@ def logout():
 if __name__ == "__main__":
  app.run(debug=True)
  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

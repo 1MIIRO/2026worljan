@@ -466,8 +466,7 @@ body {
     height: 100px;
     display: flex;
     flex-direction: column;
-
-    transition: bottom 0.35s ease;
+    transition: bottom 0.3s ease;
     z-index: 1500;
 }
 
@@ -493,7 +492,7 @@ body {
     font-size: 14px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     z-index: 200;
-    transition: transform 0.3s ease;
+    transition: transform 0.9s ease;
 }
 
 /* SYMBOL ONLY */
@@ -526,11 +525,44 @@ body {
     overflow-y: hidden;
 }
 
-/* CLEAN SCROLL */
-.track-scroll::-webkit-scrollbar {
-    display: none;
+/* SCROLLABLE PILL CONTAINER */
+#trackDrawerContent .track-scroll {
+    display: flex;          /* arrange pills in a row */
+    flex-wrap: nowrap;      /* prevent wrapping */
+    overflow-x: auto;       /* horizontal scroll */
+    overflow-y: hidden;     /* no vertical scroll */
+    gap: 12px;              /* spacing between pills */
+    padding-bottom: 4px;    /* optional for scrollbar spacing */
+    height: 100%;           /* match drawer height */
+    align-items: center;    /* center pills vertically */
 }
-.track-scroll {
-    scrollbar-width: none;
+
+/* OPTIONAL: style scrollbar nicely */
+#trackDrawerContent .track-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+#trackDrawerContent .track-scroll::-webkit-scrollbar-thumb {
+    background-color: #4da6ff;
+    border-radius: 4px;
+    border: 2px solid #f1f1f1;
+}
+
+#trackDrawerContent .track-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+/* STYLE FOR EACH PILL */
+.order-pill {
+    min-width: 200px;      /* ensure visible width */
+    flex-shrink: 0;        /* prevent shrinking */
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 

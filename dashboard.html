@@ -281,23 +281,19 @@
         <span class="toggle-text">Track orders</span>
     </div>
 
-        <!-- TRACK ORDER DRAWER -->
         <div id="trackDrawer">
-
-            <!-- PULL HANDLE (1/8 WIDTH) -->
             <div id="trackHandle">
                 <span id="trackSymbol">+</span>
                 <span class="track-text">Track Orders</span>
             </div>
 
-            <!-- MAIN DRAWER -->
             <div id="trackDrawerContent">
                 <div class="track-scroll">
-                    <!-- pills go here later -->
+                    <!-- Orders will go here -->
                 </div>
             </div>
-
         </div>
+
 
     <!-- SCRIPT -->
     <script>
@@ -631,113 +627,115 @@
         const customerNameDiv = document.getElementById('customerName');
         const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]');
 
-    
-        placeOrderBtn.addEventListener('click', () => {
-    const orderNumber = orderNumberDiv.textContent.trim();
-    const orderType = orderTypeBtn.dataset.selectedId; // dine_in or takeaway
-    const customerName = document.getElementById('customerName').textContent.trim();
-    const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]'); // table dropdown
-    const tableId = tableBtn.dataset.selectedId;
+      placeOrderBtn.addEventListener('click', () => {
+            const orderNumber = orderNumberDiv.textContent.trim();
+            const orderType = orderTypeBtn.dataset.selectedId; // dine_in or takeaway
+            const customerName = document.getElementById('customerName').textContent.trim();
+            const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]');
+            const tableId = tableBtn?.dataset.selectedId;
 
-    // --- Validation ---
-    if (!orderNumber || orderNumber === 'Order Number') {
-        alert('Please enter Order Number');
-        return;
-    }
-    if (!orderType) {
-        alert('Please select Order Type');
-        return;
-    }
-    if (!customerName || customerName === 'Customer Name') {
-        alert('Please enter Customer Name');
-        return;
-    }
-    if (!tableId) {
-        alert('Please select a table');
-        return;
-    }
-
-    // --- Grab product data from Display Screen 1 ---
-    const orderItemsRows = Array.from(orderItems.children); // Display Screen 1 rows
-    if (orderItemsRows.length === 0) {
-        alert('No products selected!');
-        return;
-    }
-
-    const orderItemsData = orderItemsRows.map(row => {
-        let name = '';
-        let price = 0;
-        let quantity = 0;
-
-        const divs = row.querySelectorAll('div');
-        divs.forEach(div => {
-            const text = div.textContent.trim();
-
-            if (text.startsWith('$')) {
-                // This is price
-                price = parseFloat(text.replace('$', '').trim());
-            } else if (text.includes('Qty:')) {
-                // This is quantity
-                quantity = parseInt(text.replace('Qty:', '').trim(), 10);
-            } else if (!name) {
-                // This is name, only if it’s not price
-                name = text;
+            // --- Validation ---
+            if (!orderNumber || orderNumber === 'Order Number') {
+                alert('Please enter Order Number');
+                return;
             }
+            if (!orderType) {
+                alert('Please select Order Type');
+                return;
+            }
+            if (!customerName || customerName === 'Customer Name') {
+                alert('Please enter Customer Name');
+                return;
+            }
+            if (!tableId) {
+                alert('Please select a table');
+                return;
+            }
+
+            // --- Grab product data from Display Screen 1 ---
+            const orderItemsRows = Array.from(orderItems.children);
+
+            if (orderItemsRows.length === 0) {
+                alert('No products selected!');
+                return;
+            }
+
+            // Parse each row into {good_name, quantity, price}
+            const orderItemsData = orderItemsRows.map(row => {
+                let name = '';
+                let price = 0;
+                let quantity = 0;
+
+                const divs = row.querySelectorAll('div');
+                divs.forEach(div => {
+                    const rawText = div.textContent.trim();
+
+                    // PRICE ONLY
+                    if (rawText.startsWith('$')) {
+                        price = parseFloat(rawText.replace('$', '').trim());
+                    }
+                    // QUANTITY
+                    else if (rawText.includes('Qty:')) {
+                        quantity = parseInt(rawText.replace('Qty:', '').trim(), 10);
+                    }
+                    // NAME — FIRST LINE ONLY
+                    else if (!name) {
+                        name = rawText.split('\n')[0].trim();
+                    }
+                });
+
+                if (!name || isNaN(price) || isNaN(quantity)) {
+                    console.error('Invalid item detected:', { name, quantity, price });
+                    return null;
+                }
+
+                return { good_name: name,  quantity: quantity, price_at_order: price };
+            }).filter(Boolean);
+
+            if (orderItemsData.length === 0) {
+                alert('No valid items found!');
+                return;
+            }
+
+            // --- ALERT for testing ---
+            let alertMsg = 'Order Items:\n';
+            orderItemsData.forEach(item => {
+                alertMsg += `good_name: ${item.good_name}, quantity: ${item.quantity}, price: ${item.price_at_order}\n`;
+            });
+            alert(alertMsg);
+
+            // --- Send order + items to backend individually ---
+            fetch('/place_order_table', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order_number: orderNumber,
+                    order_type: orderType,
+                    customer_name: customerName,
+                    table_id: tableId,
+                    order_items: orderItemsData  // each item will be iterated in Flask route
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Order placed successfully ✅');
+
+                    // Reset UI
+                    orderItems.innerHTML = '';
+                    tempOrderItems = [];
+                    document.querySelector('.billing-row span.amount').textContent = '$0.00';
+                    document.getElementById('taxAmount').textContent = '$0.00';
+                    document.getElementById('totalAmount').textContent = '$0.00';
+                } else {
+                    alert('Failed to place order ❌: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Server error ❌');
+            });
         });
-
-        if (!name || isNaN(quantity) || isNaN(price)) {
-            console.error("Invalid item detected:", { name, quantity, price });
-            return null; // skip invalid rows
-        }
-
-        return { good_name: name, quantity, price };
-    }).filter(item => item !== null);
-
-    // --- ALERT for testing: show all items properly ---
-    if (orderItemsData.length === 0) {
-        alert('No valid items found!');
-        return;
-    }
-
-    let alertMsg = "Order Items:\n";
-    orderItemsData.forEach(item => {
-        alertMsg += `good: ${item.good_name}, quantity: ${item.quantity}, price: ${item.price}\n`;
-    });
-    alert(alertMsg); // <-- Shows all items correctly
-
-    // --- Send order + order items to backend ---
-    fetch('/place_order_table', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            order_number: orderNumber,
-            order_type: orderType,
-            customer_name: customerName,
-            table_id: tableId,
-            order_items: orderItemsData
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert('Order placed successfully ✅');
-
-            // Reset Display Screen 1
-            orderItems.innerHTML = '';
-            tempOrderItems = [];
-            document.querySelector('.billing-row span.amount').textContent = '$0.00';
-            document.getElementById('taxAmount').textContent = '$0.00';
-            document.getElementById('totalAmount').textContent = '$0.00';
-        } else {
-            alert('Failed to place order ❌: ' + data.error);
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert('Server error ❌');
-    });
-});
-
 
 
         const drawer = document.getElementById('trackDrawer');
@@ -746,13 +744,71 @@
 
         let open = false;
 
-        handle.addEventListener('click', () => {
+       handle.addEventListener('click', () => {
             open = !open;
             drawer.classList.toggle('open');
 
+            // Update symbol
             symbol.textContent = open ? '−' : '+';
             symbol.style.color = open ? '#dc2626' : '#2563eb';
+
+            // SHIFT HANDLE UP/DOWN
+            if (open) {
+                handle.style.transform = 'translateY(-100px)'; // shift up when open
+            } else {
+                handle.style.transform = 'translateY(0px)';   // back down when closed
+            }
         });
+
+      // Select the container
+      const trackOrdersContainer = document.querySelector('#trackDrawerContent .track-scroll');
+
+function loadTrackOrders() {
+    fetch('/trackhome_orders')
+        .then(res => res.json())
+        .then(orders => {
+            if (!Array.isArray(orders) || orders.length === 0) {
+                trackOrdersContainer.innerHTML = '<p>No orders found</p>';
+                return;
+            }
+
+            trackOrdersContainer.innerHTML = ''; // clear previous
+
+            orders.forEach(order => {
+                const pill = document.createElement('div');
+                pill.classList.add('order-pill');
+                pill.style.border = '1px solid #ccc';
+                pill.style.padding = '8px';
+                pill.style.marginBottom = '6px';
+                pill.style.borderRadius = '4px';
+                pill.style.backgroundColor = '#f9f9f9';
+
+                pill.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span class="customer-name">${order.customer_name}</span>
+                        <select class="order-status">
+                            <option value="on_kitchen_hand" selected>on_kitchen_hand</option>
+                            <option value="all_done">all_done</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="table-type">${order.Table_number}.${order.order_type}</span>
+                        <span class="order-time">${order.order_time}</span>
+                    </div>
+                `;
+
+                trackOrdersContainer.appendChild(pill);
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching orders:', err);
+            trackOrdersContainer.innerHTML = '<p>Error loading orders</p>';
+        });
+}
+
+// Call on page load
+loadTrackOrders();
+
 
     </script>
 

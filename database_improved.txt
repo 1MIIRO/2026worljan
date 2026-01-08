@@ -1,0 +1,70 @@
+product_categories 
+product_category_number:(primary-key auto-increament)
+product_category_name:(string name)
+
+
+products_category_table
+product_number:(foriegn-key from products table)
+product_category_number(foriegn-key from product_categories)
+
+
+product_inventory_table
+product_inventory_reffrence_number:(primary-key auto-increament)
+product_number:(foriegn-key from products table)
+quantity:( initial_number of goods)
+Current_stock :(stock after an order is made)
+sales:( quanttiy -current_stock)
+warniing:( warning_status if stock is low)
+
+
+orders_table
+order_ID: (primary-key auto-increament)
+order_identification_number:(int)
+items_count:(int)
+order_state:(string)
+user_id:(foriegn-key from users table)
+Total_ammount:(double-float)
+DATE:(DATE)
+TIME:(TIME)
+LAST_UPDATE:(DATETIME)
+
+
+order_categories
+order_categories_ID: (primary-key auto-increament)
+order_categories_name:(string)
+
+
+order_with_categories
+order_ID :( foriegn-key from orders_table)
+order_categories_ID:(foriegn-key from order_categories)
+
+order_states  
+pending        → waiting
+in_progress    → working
+complete       → done
+cancelled      → stopped
+
+
+Order_detials
+Order_detials_ID:( (primary-key auto-increament)
+order_refrence_number:(foriegn-key from orders table )
+product_purchased:(foriegn-key from products table)
+item_quantities:(number_purchased)
+order_detials:(large string)
+Total:(double-float)
+
+tax_discount_table 
+TAX_RATE(int)
+discount_amount(int)
+discount_status(string)
+
+
+audit_log
+audit_log_id:(primary-key auto-increament)
+Audit_desc:(String)
+Audit_activity:(string)
+datetime:(datetime)
+
+
+
+
