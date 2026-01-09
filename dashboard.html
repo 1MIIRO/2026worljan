@@ -115,16 +115,14 @@
                 </div>
             </div>
             <div class="dropdown">
-                <button class="dropdown-btn" data-default-text="Order Type">Order Type ▼</button>
-                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000;">
-                    <div class="dropdown-item" data-id="dine_in" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
-                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                        dine_in
-                    </div>
-                    <div class="dropdown-item" data-id="takeaway" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
-                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                        takeaway
-                    </div>
+                <button class="dropdown-btn">Select Order Type ▼</button>
+                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                    {% for category in order_categories %}
+                        <div class="dropdown-item" data-id="{{ table.Table_db_id }}" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                            <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
+                            {{ category.order_categories_name }}
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -293,7 +291,6 @@
                 </div>
             </div>
         </div>
-
 
     <!-- SCRIPT -->
     <script>
@@ -736,7 +733,6 @@
                 alert('Server error ❌');
             });
         });
-
 
         const drawer = document.getElementById('trackDrawer');
         const handle = document.getElementById('trackHandle');

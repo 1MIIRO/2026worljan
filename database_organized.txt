@@ -15,11 +15,11 @@ user
 
 INSERT INTO user (user_name, personal_name, user_password, job_desc)
 VALUES 
-('john_doe', 'John Doe', 'password123', 'Manager'),
-('jane_smith', 'Jane Smith', 'securepass', 'Cashier'),
-('mike_jones', 'Mike Jones', 'mike2026', 'Chef'),
-('sara_lee', 'Sara Lee', 'sara!@#', 'Waiter'),
-('alex_kim', 'Alex Kim', 'alexpass', 'Receptionist');
+('john_doe', 'John Doe', '12345', 'Manager'),
+('john_doe1', 'Jane Smith', '12345', 'Cashier'),
+('john_doe2', 'Mike Jones', '12345', 'Chef'),
+('john_doe3', 'Sara Lee', '12345', 'Waiter'),
+('john_doe4', 'Alex Kim', '12345', 'Receptionist');
 
 *********************************************************************************
 
@@ -43,37 +43,6 @@ products
 		| description | text          | YES  |     | NULL    |                |
 		+-------------+---------------+------+-----+---------+----------------+
 
-
-			+-------------+-----------------------+-------+------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
-			| good_number | good_name             | price | image_path                                           | description                                                                                            |
-			+-------------+-----------------------+-------+------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
-			|           1 | banana_cake           |  6.00 | static/food_menu_images/banana_cake_image.jpg        | Moist and sweet banana loaf, lightly spiced, perfect for breakfast or a snack.                         |
-			|           2 | blackforest_cake      |  6.00 | static/food_menu_images/blackforest_cake_image.jpg   | A rich chocolate cake layered with cherries and whipped cream.                                         |
-			|           3 | cake_bread            |  3.00 | static/food_menu_images/cake_bread_pic.jpg           | A soft and slightly sweet bread, perfect for breakfast or snacks.                                      |
-			|           4 | cheese_cake           |  5.00 | static/food_menu_images/cheese_cake_image.jpg        | A rich and creamy dessert with a smooth cheese filling on a buttery crust.                             |
-			|           5 | chiffon_cake          |  6.00 | static/food_menu_images/chiffon_cake_image.jpg       | A light and airy cake made with vegetable oil and whipped egg whites.                                  |
-			|           6 | butter_cake           |  4.00 | static/food_menu_images/butter_cake_inmage.jpg       | A soft, buttery cake with a golden crust and tender crumb.                                             |
-			|           7 | choclate_mouse        |  6.00 | static/food_menu_images/chocolate_moos_image.jpg     | A creamy, fluffy chocolate dessert with a smooth texture.                                              |
-			|           8 | choclate_cake         |  6.00 | static/food_menu_images/chocolate_cake_image.jpg     | A moist and rich chocolate cake perfect for any chocolate lover.                                       |
-			|           9 | cream_cupcake         |  4.00 | static/food_menu_images/cream_cupcake_image.jpg      | A soft cupcake topped with sweet, creamy frosting.                                                     |
-			|          10 | french_bread          |  3.00 | static/food_menu_images/french_bread_pic.jpg         | A classic French bread with a crisp crust and soft, airy interior.                                     |
-			|          11 | italian_bread         |  4.00 | static/food_menu_images/italian_bread_pic.jpg        | A soft and flavorful Italian bread, perfect for sandwiches or toasting.                                |
-			|          12 | lemon_cake            |  6.00 | static/food_menu_images/lemon_cake_image.jpg         | A zesty, moist cake with a fresh lemon flavor.                                                         |
-			|          13 | poundcake             |  5.00 | static/food_menu_images/poundcake_image.jpg          | A dense, buttery cake with a rich, classic flavor.                                                     |
-			|          14 | sliced_bread          |  3.00 | static/food_menu_images/sliced_bread_pic.jpg         | A soft and freshly sliced bread, perfect for sandwiches or toast.                                      |
-			|          15 | soughdough_bread      |  4.00 | static/food_menu_images/soughdough_bread_pic.jpg     | A tangy and crusty sourdough bread, perfect for sandwiches or toasting.                                |
-			|          16 | sponge_cake           |  5.00 | static/food_menu_images/sponge_cake_image.jpg        | A light and airy sponge cake, perfect for layering or enjoying as is.                                  |
-			|          17 | strawberry_mouse      |  5.00 | static/food_menu_images/strawberry_mouse_image.jpg   | A smooth and airy dessert flavored with fresh strawberries.                                            |
-			|          18 | tiramisu_cake         |  6.00 | static/food_menu_images/tiramisu_cake_image.jpg      | An Italian-inspired cake with coffee-soaked layers and creamy mascarpone.                              |
-			|          19 | yeast_donut           |  6.00 | static/food_menu_images/yeast_donut_image.jpg        | Generated description here                                                                             |
-			|          20 | jelly_doughnut        |  6.00 | static/food_menu_images/jelly_doughnut_image.jpg     | A soft doughnut filled with sweet jelly and coated with sugar.                                         |
-			|          21 | glazed_doughnut       |  5.00 | static/food_menu_images/glazed_donut_image.jpg       | A classic glazed doughnut with a sweet sugar coating, soft and fluffy.                                 |
-			|          22 | Cruller_Doughnut      |  6.00 | static/food_menu_images/cruller_donut_image.jpg      | A light, twisted doughnut with a slightly crisp exterior and soft interior, perfect for a sweet snack. |
-			|          23 | Churro                |  5.00 | static/food_menu_images/churro_image.jpg             | A crunchy, cinnamon-sugar coated doughnut-style treat, perfect for dipping in chocolate or caramel.    |
-			|          24 | Chocolate Doughnut    |  6.00 | static/food_menu_images/choclate_doughnut_image.jpg  | A rich chocolate-glazed doughnut, soft and fluffy inside, perfect for chocolate lovers.                |
-			|          25 | Boston Cream Doughnut |  7.00 | static/food_menu_images/boston_cream_donut_image.jpg | A classic Boston Cream Doughnut filled with creamy custard and topped with a chocolate glaze.          |
-			+-------------+-----------------------+-------+------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
-			
 			INSERT INTO products (good_name, price, image_path, description) VALUES
 			('banana_cake', 6.00, 'static/food_menu_images/banana_cake_image.jpg',
 			 'Moist and sweet banana loaf, lightly spiced, perfect for breakfast or a snack.'),
@@ -141,102 +110,131 @@ products
 			('Cruller_Doughnut', 6.00, 'static/food_menu_images/cruller_donut_image.jpg',
 			 'A light, twisted doughnut with a slightly crisp exterior and soft interior, perfect for a sweet snack.'),
 
-			('Churro', 5.00, 'static/food_menu_images/churro_image.jpg',
-			 'A crunchy, cinnamon-sugar coated doughnut-style treat, perfect for dipping in chocolate or caramel.'),
+			('Cinnamon Bun', 6.50, 'static/food_menu_images/cinnamon_bun.jpg',
+			 'A soft, fluffy bun rolled with cinnamon sugar and topped with a light glaze, baked fresh daily.'),
 
-			('Chocolate Doughnut', 6.00, 'static/food_menu_images/choclate_doughnut_image.jpg',
-			 'A rich chocolate-glazed doughnut, soft and fluffy inside, perfect for chocolate lovers.'),
+			('Fruit Cake', 8.00, 'static/food_menu_images/fruit_cake_image.jpg',
+			 'A moist traditional fruit cake packed with dried fruits and lightly spiced for rich flavor.'),
 
-			('Boston Cream Doughnut', 7.00, 'static/food_menu_images/boston_cream_donut_image.jpg',
-			 'A classic Boston Cream Doughnut filled with creamy custard and topped with a chocolate glaze.');
+			('Waffles', 7.50, 'static/food_menu_images/waffles.jpg',
+			 'Golden, crispy waffles with a soft interior, perfect with syrup, butter, or fresh fruit.'),
+
+			('Scone', 6.00, 'static/food_menu_images/Scorn.jpg',
+			 'A classic buttery scone with a crumbly texture, ideal with tea or coffee.'),
+
+			('Gourmet Burger', 12.00, 'static/food_menu_images/gormet_burger.jpg',
+			 'A premium beef burger topped with fresh vegetables, cheese, and house-made sauce.'),
+
+			('Grilled Chicken & Cheese Sandwich', 10.50, 'static/food_menu_images/grilled_cheese_chicken_sandwitch.jpg',
+			 'Grilled chicken breast layered with melted cheese and toasted bread for a hearty meal.'),
+
+			('Salad Sandwich', 8.00, 'static/food_menu_images/salad_sandwitch.jpg',
+			 'A light and fresh sandwich filled with crisp vegetables and a creamy dressing.'),
+
+			('Pita Bread Sandwich', 9.00, 'static/food_menu_images/pita_bread_sandwitch.jpg',
+			 'Soft pita bread stuffed with seasoned fillings and fresh vegetables.'),
+
+			('Grilled Cheese Sandwich', 7.50, 'static/food_menu_images/grilled_cheese_sandwitch (2).jpg',
+			 'Classic grilled sandwich with golden toasted bread and melted cheese inside.'),
+
+			('Chef’s Choice Burger', 13.50, 'static/food_menu_images/chef_choice_burger.jpg',
+			 'A signature burger crafted by the chef with premium ingredients and bold flavors.'),
+
+			('Double Decker Cheese Sandwich', 11.00, 'static/food_menu_images/double_decker_cheese_sandwitch.jpg',
+			 'A stacked sandwich with two layers of bread, rich cheese, and savory fillings.');
+
 
 ********************************************************************************************************************8
 
-products_type
-
-		DESCRIBE products_type;
-
-
-		 CREATE TABLE products_type (
-				 good_type_number INT AUTO_INCREMENT PRIMARY KEY,
-				 good_number INT,
-				 good_type TEXT,
-				 CONSTRAINT fk_table_products
-					 FOREIGN KEY (good_number)
-					 REFERENCES products(good_number)
-			 );
-
-		+------------------+------+------+-----+---------+----------------+
-		| Field            | Type | Null | Key | Default | Extra          |
-		+------------------+------+------+-----+---------+----------------+
-		| good_type_number | int  | NO   | PRI | NULL    | auto_increment |
-		| good_number      | int  | YES  | MUL | NULL    |                |
-		| good_type        | text | YES  |     | NULL    |                |
-		+------------------+------+------+-----+---------+----------------+
+CREATE TABLE product_categories (
+    product_category_number INT AUTO_INCREMENT PRIMARY KEY,
+    product_category_name VARCHAR(255) NOT NULL
+);
+INSERT INTO products (product_category_name) VALUES
+			('Bread'),
+            ('Cake'),
+            ('Donuts'),
+            ('pastries'),
+            ('Sandwich'
+			);
 
 
-		INSERT INTO products_type (good_number, good_type) VALUES
-		(1,  'cake'),
-		(2,  'cake'),
-		(3,  'bread'),
-		(4,  'cake'),
-		(5,  'cake'),
-		(6,  'cake'),
-		(7, 'cake'),
-		(8, 'cake'),
-		(9, 'cake'),
-		(10, 'bread'),
-		(11, 'bread'),
-		(12, 'cake'),
-		(13, 'cake'),
-		(14, 'bread'),
-		(15, 'bread'),
-		(16, 'bread'),
-		(17, 'bread'),
-		(18, 'bread'),
-		(19, 'doughnut'),
-		(20, 'doughnut'),
-		(21, 'doughnut'),
-		(22, 'doughnut'),
-		(23, 'doughnut'),
-		(24, 'doughnut'),
-		(25, 'doughnut');
+************************************************************************************
 
-		Select * from products_type;
 
-		+------------------+-------------+-----------+
-		| good_type_number | good_number | good_type |
-		+------------------+-------------+-----------+
-		|                1 |           1 | cake      |
-		|                2 |           2 | cake      |
-		|                3 |           3 | bread     |
-		|                4 |           4 | cake      |
-		|                5 |           5 | cake      |
-		|                6 |           6 | cake      |
-		|                7 |           7 | cake      |
-		|                8 |           8 | cake      |
-		|                9 |           9 | cake      |
-		|               10 |          10 | bread     |
-		|               11 |          11 | bread     |
-		|               12 |          12 | cake      |
-		|               13 |          13 | cake      |
-		|               14 |          14 | bread     |
-		|               15 |          15 | bread     |
-		|               16 |          16 | bread     |
-		|               17 |          17 | bread     |
-		|               18 |          18 | bread     |
-		|               19 |          19 | doughnut  |
-		|               20 |          20 | doughnut  |
-		|               21 |          21 | doughnut  |
-		|               22 |          22 | doughnut  |
-		|               23 |          23 | doughnut  |
-		|               24 |          24 | doughnut  |
-		|               25 |          25 | doughnut  |
-		+------------------+-------------+-----------+
-		25 rows in set (0.00 sec)
-*****************************************************************************************************
+products_category_table
+
+
+CREATE TABLE products_category_table (
+    product_number INT NOT NULL,
+    product_category_number INT NOT NULL,
+
+    PRIMARY KEY (product_number, product_category_number),
+
+    CONSTRAINT fk_pct_product
+        FOREIGN KEY (product_number)
+        REFERENCES products(good_number)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_pct_category
+        FOREIGN KEY (product_category_number)
+        REFERENCES product_categories(product_category_number)
+        ON DELETE CASCADE
+);
+
+-- Bread category = 1
+INSERT INTO products_category_table (product_number, product_category_number) VALUES
+(10, 1), -- french_bread
+(11, 1), -- italian_bread
+(3, 1),  -- cake_bread
+(14, 1), -- sliced_bread
+(15, 1); -- soughdough_bread
+
+-- Cake category = 2
+INSERT INTO products_category_table (product_number, product_category_number) VALUES
+(1, 2),  -- banana_cake
+(2, 2),  -- blackforest_cake
+(5, 2),  -- chiffon_cake
+(6, 2),  -- butter_cake
+(8, 2),  -- choclate_cake
+(16, 2), -- sponge_cake
+(18, 2), -- tiramisu_cake
+(12, 2), -- lemon_cake
+(13, 2), -- poundcake
+(4, 2);  -- cheese_cake
+
+-- Donuts category = 3
+INSERT INTO products_category_table (product_number, product_category_number) VALUES
+(19, 3), -- yeast_donut
+(20, 3), -- jelly_doughnut
+(21, 3), -- glazed_doughnut
+(22, 3), -- Cruller_Doughnut
+(9, 3),  -- Boston_Cream_Doughnut
+(7, 3),  -- Chocolate_Doughnut
+(1, 3),  -- Churro (assuming good_number=1)
+(23, 3); -- Cinnamon_Bun
+
+-- Pastries category = 4
+INSERT INTO products_category_table (product_number, product_category_number) VALUES
+(14, 4), -- Pain_aux_Raisins
+(24, 4), -- Fruit_Cake
+(15, 4), -- Crème_Brûlée
+(25, 4), -- Waffles
+(26, 4); -- Scone
+
+-- Sandwich category = 5
+INSERT INTO products_category_table (product_number, product_category_number) VALUES
+(27, 5), -- Gourmet_Burger
+(28, 5), -- Grilled_Chicken_&_Cheese_Sandwich
+(29, 5), -- Salad_Sandwich
+(30, 5), -- Pita_Bread_Sandwich
+(31, 5), -- Grilled_Cheese_Sandwich
+(32, 5), -- Chef’s_Choice_Burger
+(33, 5); -- Double_Decker_Cheese_Sandwich
+
+
+**************************************************************************************************
 tables
-
 
 					CREATE TABLE tables (
 							Table_db_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -650,111 +648,90 @@ VALUES
 		
 ******************************************************************************		
 
+orders_improved_table
 
-database of orders 
+CREATE TABLE orders_improved_table (
+    order_ID INT AUTO_INCREMENT PRIMARY KEY,
+    order_identification_number INT NOT NULL,
+    items_count INT NOT NULL,
+    order_state VARCHAR(50) NOT NULL,
+    user_id INT NOT NULL,
+    Total_ammount DOUBLE NOT NULL,
+    DATE DATE NOT NULL,
+    TIME TIME NOT NULL,
+    LAST_UPDATE DATETIME NOT NULL,
 
- order_id  , order_identification_number("random genarated number") , order_date ,order_time ,order_status("inprogress,done,cancelled") , order_state("closed,active") , completion_status("on_kitchen hand ,all_done"),customer_name, goods_purchased , total_payment 
-
-
-database of orders 
- 
-┌──────────────────────────────────────────────┐
-│                  orders                      │
-├──────────────────────────────────────────────┤
-│ PK order_id                                  │
-│    order_identification_number               │
-│ FK user_id (nullable)                        │
-│    order_date                                │
-│    order_time                                │
-│                                              │
-└──────────────────────────────────────────────┘
-	
-
-	
-┌──────────────────────────────────────────────┐
-│               order_type                     │
-├──────────────────────────────────────────────┤
-│ PK order_type_id                             │
-│ FK order_id                                  │
-│    order_type                                │
-│    (dine-in / takeaway)                      │
-└──────────────────────────────────────────────┘
-
-┌──────────────────────────────┐
-│        customer_order        │
-├──────────────────────────────┤
-│ PK customer_order_id         │
-│ FK order_id                  │
-│    customer_name             │
-└──────────────────────────────┘
-
-┌──────────────────────────────────────────────┐
-│                order_items                   │
-├──────────────────────────────────────────────┤
-│ PK order_item_id                             │
-│ FK order_id                                  │
-│ FK good_number                               │
-│    quantity                                  │
-│    price_at_order                            │
-└──────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────┐
-│        order_completion_status               │
-├──────────────────────────────────────────────┤
-│ PK completion_id                             │
-│ FK order_id                                  │
-│    completed_at                              │
-│    preparation_duration                      │
-│    completion_status                         │
-└──────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────┐
-│               order_status                   │
-├──────────────────────────────────────────────┤
-│ PK status_id                                 │
-│ FK order_id                                  │
-│    order_status                              │
-│    status_time                               │
-└──────────────────────────────────────────────┘
-
-┌──────────────────────────────┐
-│        order_payment         │
-├──────────────────────────────┤
-│ PK payment_id                │
-│ FK order_id                  │
-│    payment_status            │
-│    (paid / unpaid)           │
-└──────────────────────────────┘
-
-┌──────────────────────────────────────────────┐
-│               order_payment                  │
-├──────────────────────────────────────────────┤
-│ PK payment_id                                │
-│ FK order_id                                  │
-│    amount_paid                               │  
-│    payment_status                            │  -- ENUM: 'paid', 'unpaid', 'partial'
-│    payment_datetime                          │  -- when payment was made
-└──────────────────────────────────────────────┘
-
-
-
--- Orders table
-CREATE TABLE orders (
-    order_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_identification_number VARCHAR(20) NOT NULL UNIQUE,
-    user_id INT NULL,
-    order_date DATE NOT NULL,
-    order_time TIME NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
+    CONSTRAINT fk_orders_improved_user
+        FOREIGN KEY (user_id)
+        REFERENCES user(user_id)
+        ON DELETE RESTRICT
 );
 
--- Order Type table
-CREATE TABLE order_type (
-    order_type_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    order_type ENUM('dine-in','takeaway') NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+
++-----------------------------+-------------+------+-----+---------+----------------+
+| Field                       | Type        | Null | Key | Default | Extra          |
++-----------------------------+-------------+------+-----+---------+----------------+
+| order_ID                    | int         | NO   | PRI | NULL    | auto_increment |
+| order_identification_number | int         | NO   |     | NULL    |                |
+| items_count                 | int         | NO   |     | NULL    |                |
+| order_state                 | varchar(50) | NO   |     | NULL    |                |
+| user_id                     | int         | NO   | MUL | NULL    |                |
+| Total_ammount               | double      | NO   |     | NULL    |                |
+| DATE                        | date        | NO   |     | NULL    |                |
+| TIME                        | time        | NO   |     | NULL    |                |
+| LAST_UPDATE                 | datetime    | NO   |     | NULL    |                |
++-----------------------------+-------------+------+-----+---------+----------------+
+
+*****************************************************************************
+
+order_categories
+
+CREATE TABLE order_categories (
+    order_categories_ID INT AUTO_INCREMENT PRIMARY KEY,
+    order_categories_name VARCHAR(255) NOT NULL
 );
+INSERT INTO order_categories (order_categories_name) VALUES
+    ('Dine_in'),
+    ('Take_away'),
+    ('Delivery');
+
+
+**************************************************************************
+
+order_with_categories
+
+CREATE TABLE order_with_categories (
+    order_ID INT NOT NULL,
+    order_categories_ID INT NOT NULL,
+
+    FOREIGN KEY (order_ID)
+        REFERENCES orders_improved_table(order_ID)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (order_categories_ID)
+        REFERENCES order_categories(order_categories_ID)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+
+        # Get good_number from products table
+            cursor.execute("SELECT order_categories_ID FROM order_categories WHERE order_categories_name = = %s", (order_categories_name,))
+            order_category_row = cursor.fetchone()
+            if not order_category_row:
+                # Skip items not found in products table
+                continue
+            order_categories_ID = order_category_row['order_categories_ID']
+
+            cursor.execute("""
+                INSERT INTO order_with_categories (order_ID,order_categories_ID)
+                VALUES (%s, %s)
+            """, (order_ID,order_categories_ID))
+        
+
+****************************************************************************
 
 -- Customer Order table
 CREATE TABLE customer_order (
@@ -764,16 +741,61 @@ CREATE TABLE customer_order (
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
+*****************************************************************************
+Order_detials
 
-CREATE TABLE order_items (
-    order_item_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    good_number INT NOT NULL,
-    quantity INT NOT NULL,
-    price_at_order DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE,
-    FOREIGN KEY (good_number) REFERENCES products(good_number) ON DELETE RESTRICT
+CREATE TABLE Order_detials (
+    Order_detials_ID INT NOT NULL AUTO_INCREMENT,
+    order_refrence_number INT NOT NULL,
+    product_purchased INT NOT NULL,
+    item_quantities INT NOT NULL,
+    order_detials TEXT,
+    Total DOUBLE NOT NULL,
+
+    PRIMARY KEY (Order_detials_ID),
+
+    FOREIGN KEY (order_refrence_number)
+        REFERENCES orders_improved_table(order_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (product_purchased)
+        REFERENCES products(good_number)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 );
+
++-----------------------+--------+------+-----+---------+----------------+
+| Field                 | Type   | Null | Key | Default | Extra          |
++-----------------------+--------+------+-----+---------+----------------+
+| Order_detials_ID      | int    | NO   | PRI | NULL    | auto_increment |
+| order_refrence_number | int    | NO   | MUL | NULL    |                |
+| product_purchased     | int    | NO   | MUL | NULL    |                |
+| item_quantities       | int    | NO   |     | NULL    |                |
+| order_detials         | text   | YES  |     | NULL    |                |
+| Total                 | double | NO   |     | NULL    |                |
++-----------------------+--------+------+-----+---------+----------------+
+
+ # 4️⃣ Insert each item into Order_detials table
+        for item in order_items:
+            good_name = item['good_name']
+            quantity = item['quantity']
+            price_at_order = item['price_at_order']
+
+            # Get good_number from products table
+            cursor.execute("SELECT good_number FROM products WHERE good_name = %s", (good_name,))
+            good_row = cursor.fetchone()
+            if not good_row:
+                # Skip items not found in products table
+                continue
+            good_number = good_row['good_number']
+
+            cursor.execute("""
+                INSERT INTO Order_detials (order_refrence_number, product_purchased, item_quantities,order_detials,price_at_order)
+                VALUES (%s, %s, %s, %s)
+            """, (order_id, good_number, quantity, price_at_order))
+        
+*****************************************************************************
 
 
 -- Order Completion Status table
@@ -786,75 +808,30 @@ CREATE TABLE order_completion_status (
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
+*****************************************************************************
+CREATE TABLE tax_discount_table (
+         TAX_RATE INT NOT NULL,
+         discount_amount INT NOT NULL,
+         discount_status VARCHAR(50) NOT NULL
+     );
 
 
 
+****************************************************************************
 
 
+CREATE TABLE order_tax_discount (
+    order_ID INT NOT NULL,
+    TAX_RATE INT NOT NULL,
+    discount_amount INT NOT NULL,
+    discount_status VARCHAR(50) NOT NULL,
+    total_payment INT NOT NULL,
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- Order Status table (timeline)
-CREATE TABLE order_status (
-    status_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    order_status ENUM('inprogress','done','cancelled') NOT NULL,
-    status_time DATETIME NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
-);
-
--- Simple Order Payment table (paid/unpaid)
-CREATE TABLE order_payment_simple (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    payment_status ENUM('paid','unpaid') NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
-);
-
--- Detailed Order Payment table
-CREATE TABLE order_payment_detailed (
-    payment_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    amount_paid DECIMAL(10,2) NOT NULL,
-    payment_status ENUM('paid','unpaid','partial') NOT NULL,
-    payment_datetime DATETIME NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+    FOREIGN KEY (order_ID) REFERENCES orders_improved_table(order_ID)
 );
 
 
-
-
-+--------------------------+
-| Tables_in_bakery_busness |
-+--------------------------+
-| customer_order           |
-| order_completion_status  |
-| order_items              |
-| order_payment_detailed   |
-| order_payment_simple     |
-| order_status             |
-| order_type               |
-| orders                   |
-| products                 |
-| products_type            |
-| table_floor              |
-| table_reservations       |
-| tables                   |
-| user                     |
-+--------------------------+
+***********************************************************************
 
 
 
@@ -870,32 +847,6 @@ CREATE TABLE order_payment_detailed (
 
 
 
-
-
-
-
-
-
-
-
-
-
-DROP TABLE customer_orders_verification;
-
-
-
-+--------------------------+
-| Tables_in_bakery_busness |
-+--------------------------+
-| order_table              |
-| order_types              |
-| products                 |
-| products_type            |
-| table_floor              |
-| table_reservations       |
-| tables                   |
-| user                     |
-+--------------------------+
 
 
 

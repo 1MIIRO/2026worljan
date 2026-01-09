@@ -127,6 +127,18 @@ def dashboard():
         "personal_name": session.get('personal_name'),
         "job_desc": session.get('job_desc')
     }
+    
+        # Fetch order categories (Order Type dropdown)
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT order_category_id, order_categories_name
+        FROM order_categories
+        ORDER BY order_categories_name
+    """)
+    order_categories = cursor.fetchall()
+    cursor.close()
+    conn.close()
 
     # Fetch products
     conn = get_connection()
@@ -143,7 +155,7 @@ def dashboard():
     cursor.close()
     conn.close()
 
-    return render_template('dashboard.html', user=user_info, products=products,tables=tables)
+    return render_template('dashboard.html', user=user_info, products=products,tables=tables,order_categories=order_categories)
 
 @app.route('/activity_billing_queue')
 def activity_billing_queue():
@@ -264,23 +276,60 @@ def place_order_table():
     user_id = session['user_id']
     current_date = datetime.now().date()
     current_time = datetime.now().time()
-
+    now_datetime= datetime.now()
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # 1️⃣ Insert into orders table
+      # 1️⃣ Insert into orders_improved_table
+        items_count = sum(item['quantity'] for item in order_items)
+        total_amount = sum(item['quantity'] * item['price_at_order'] for item in order_items)
+        order_state = "pending"  # default
+
         cursor.execute("""
-            INSERT INTO orders (order_identification_number, user_id, order_date, order_time)
-            VALUES (%s, %s, %s, %s)
-        """, (order_number, user_id, current_date, current_time))
+            INSERT INTO orders_improved_table (
+                order_identification_number,
+                items_count,
+                order_state,
+                user_id,
+                Total_ammount,
+                DATE,
+                TIME,
+                LAST_UPDATE
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            order_number,
+            items_count,
+            order_state,
+            user_id,
+            total_amount,
+            current_date,
+            current_time,
+            now_datetime
+        ))
+
+        # Get the primary key from orders_improved_table
         order_id = cursor.lastrowid
 
-        # 2️⃣ Insert into order_type table
+
+        # 2️⃣ Insert into order_with_categories table
+                # Get order_categories_ID from order_categories table
+        cursor.execute(
+            "SELECT order_categories_ID FROM order_categories WHERE order_categories_name = %s",
+            (order_type_val,)
+        )
+
+        order_category_row = cursor.fetchone()
+
+        if not order_category_row:
+            raise ValueError("Invalid order category selected")
+
+        order_categories_ID = order_category_row['order_categories_ID']
+
         cursor.execute("""
-            INSERT INTO order_type (order_id, order_type, table_id)
-            VALUES (%s, %s, %s)
-        """, (order_id, order_type_val, table_id))
+            INSERT INTO order_with_categories (order_ID, order_categories_ID)
+            VALUES (%s, %s)
+        """, (order_id, order_categories_ID))
 
         # 3️⃣ Insert into customer_order table
         cursor.execute("""
@@ -288,7 +337,7 @@ def place_order_table():
             VALUES (%s, %s)
         """, (order_id, customer_name))
 
-        # 4️⃣ Insert each item into order_items table
+         # 4️⃣ Insert each item into order_items table
         for item in order_items:
             good_name = item['good_name']
             quantity = item['quantity']
@@ -306,7 +355,8 @@ def place_order_table():
                 INSERT INTO order_items (order_id, good_number, quantity, price_at_order)
                 VALUES (%s, %s, %s, %s)
             """, (order_id, good_number, quantity, price_at_order))
-
+        
+        
         conn.commit()
         cursor.close()
         conn.close()
@@ -361,7 +411,6 @@ def trackhome_orders():
         orders.append(converted_order)
 
     return jsonify(orders)
-
 
 @app.route('/logout')
 def logout():
