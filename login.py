@@ -3,9 +3,73 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 from datetime import datetime, timedelta
+import random
+import string
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Required for sessions
+
+# --- CONFIG ---
+ORDER_HISTORY_FILE = "order_history.json"  # store past order numbers and count
+
+# Load or initialize
+import json
+try:
+    with open(ORDER_HISTORY_FILE, "r") as f:
+        order_history = json.load(f)
+except:
+    order_history = {"last_letter_index": 0, "last_letter_repeat": 1, "letter_count": 0, "used_numbers": []}
+
+def get_letter_suffix():
+    """
+    Determines the current letter suffix based on letter_count.
+    Every 10 orders, it moves to the next letter.
+    After Z -> AA, BB, ..., then AAA, BBB, etc.
+    """
+    letters = string.ascii_uppercase
+    count = order_history["letter_count"]
+    repeat = order_history["last_letter_repeat"]
+    
+    # Calculate which letter
+    idx = order_history["last_letter_index"]
+    
+    # Build suffix
+    if idx < 26:
+        suffix = letters[idx] * repeat
+    else:
+        # Once past Z, keep repeating the last letters as needed
+        suffix = letters[idx % 26] * repeat
+
+    return suffix
+
+def increment_letter_count():
+    """Increment counters after each order and update repeat if needed"""
+    order_history["letter_count"] += 1
+    if order_history["letter_count"] >= 10:
+        order_history["letter_count"] = 0
+        order_history["last_letter_index"] += 1
+        if order_history["last_letter_index"] >= 26 * order_history["last_letter_repeat"]:
+            order_history["last_letter_index"] = 0
+            order_history["last_letter_repeat"] += 1
+
+def generate_unique_number():
+    """Generate a 6-digit number never used before"""
+    while True:
+        number = random.randint(100000, 999999)
+        if number not in order_history["used_numbers"]:
+            order_history["used_numbers"].append(number)
+            return number
+
+def generate_order_number():
+    number = generate_unique_number()
+    suffix = get_letter_suffix()
+    increment_letter_count()
+
+    # Save history
+    with open(ORDER_HISTORY_FILE, "w") as f:
+        json.dump(order_history, f)
+
+    return f"#{number}{suffix}"
 
 # Database connection function
 def get_connection():
@@ -132,13 +196,35 @@ def dashboard():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
-        SELECT order_category_id, order_categories_name
+        SELECT order_categories_ID, order_categories_name
         FROM order_categories
         ORDER BY order_categories_name
     """)
     order_categories = cursor.fetchall()
     cursor.close()
     conn.close()
+
+
+   # Fetch products with their categories
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT 
+            p.good_number,
+            p.good_name,
+            c.product_category_name AS good_category
+        FROM products p
+        LEFT JOIN products_category_table pct
+            ON p.good_number = pct.product_number
+        LEFT JOIN product_categories c
+            ON pct.product_category_number = c.product_category_number
+        ORDER BY p.good_number
+    """)
+    product_categories = cursor.fetchall()  # This will be a list of dicts with good_number, good_name, good_category
+    cursor.close()
+    conn.close()
+    
+    product_category_map = {p['good_number']: p['good_category'] for p in product_categories}
 
     # Fetch products
     conn = get_connection()
@@ -154,8 +240,19 @@ def dashboard():
     tables = cursor.fetchall()
     cursor.close()
     conn.close()
+    order_description = session.get("order_description", "")
+    return render_template('dashboard.html', user=user_info, products=products,tables=tables,order_categories=order_categories, product_categories=product_categories,product_category_map=product_category_map,order_description=order_description)
 
-    return render_template('dashboard.html', user=user_info, products=products,tables=tables,order_categories=order_categories)
+@app.route('/description', methods=['GET', 'POST'])
+def description_page():
+    if request.method == 'POST':
+        # Save description in session
+        session["order_description"] = request.form.get("description_text")
+        return redirect(url_for('dashboard'))
+    
+    # On GET, load existing description
+    description_text = session.get("order_description", "")
+    return render_template('description.html', description=description_text)
 
 @app.route('/activity_billing_queue')
 def activity_billing_queue():
@@ -263,34 +360,37 @@ def place_order_table():
         return jsonify({"success": False, "error": "User not logged in"})
 
     data = request.get_json()
-
+    order_type_val = data.get('order_type')        # 'Dine_in', 'Take_away', 'Delivery'
     order_number = data.get('order_number')
-    order_type_val = data.get('order_type')        # 'dine-in' | 'takeaway'
     customer_name = data.get('customer_name')
     table_id = data.get('table_id')
-    order_items = data.get('order_items')          # List of {good_name, quantity, price_at_order}
+    order_items = data.get('order_items')
+    order_desc = data.get('order_desc')         
 
+    # Validate required fields
     if not order_number or not order_type_val or not customer_name or not table_id or not order_items:
         return jsonify({"success": False, "error": "Missing required fields"})
 
     user_id = session['user_id']
-    current_date = datetime.now().date()
-    current_time = datetime.now().time()
-    now_datetime= datetime.now()
+    now = datetime.now()
+    current_date = now.date()
+    current_time = now.time()
+
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-      # 1️⃣ Insert into orders_improved_table
+        # 1️⃣ Insert into orders_improved_table
         items_count = sum(item['quantity'] for item in order_items)
         total_amount = sum(item['quantity'] * item['price_at_order'] for item in order_items)
-        order_state = "pending"  # default
+        order_state = "pending"
 
         cursor.execute("""
             INSERT INTO orders_improved_table (
                 order_identification_number,
                 items_count,
                 order_state,
+                order_desc,       
                 user_id,
                 Total_ammount,
                 DATE,
@@ -301,62 +401,59 @@ def place_order_table():
             order_number,
             items_count,
             order_state,
+            order_desc,
             user_id,
             total_amount,
             current_date,
             current_time,
-            now_datetime
+            now
         ))
 
-        # Get the primary key from orders_improved_table
+        # Get the primary key of the new order
         order_id = cursor.lastrowid
 
-
-        # 2️⃣ Insert into order_with_categories table
-                # Get order_categories_ID from order_categories table
-        cursor.execute(
-            "SELECT order_categories_ID FROM order_categories WHERE order_categories_name = %s",
-            (order_type_val,)
-        )
-
-        order_category_row = cursor.fetchone()
-
-        if not order_category_row:
+        # 2️⃣ Get order_categories_ID from order_categories table
+        cursor.execute("""
+            SELECT order_categories_ID 
+            FROM order_categories 
+            WHERE order_categories_name = %s
+        """, (order_type_val,))
+        category_row = cursor.fetchone()
+        if not category_row:
             raise ValueError("Invalid order category selected")
 
-        order_categories_ID = order_category_row['order_categories_ID']
+        order_categories_ID = category_row['order_categories_ID']
 
+        # 3️⃣ Insert into order_with_categories
         cursor.execute("""
             INSERT INTO order_with_categories (order_ID, order_categories_ID)
             VALUES (%s, %s)
         """, (order_id, order_categories_ID))
 
-        # 3️⃣ Insert into customer_order table
+        # 4️⃣ Insert into customer_order
         cursor.execute("""
             INSERT INTO customer_order (order_id, customer_name)
             VALUES (%s, %s)
         """, (order_id, customer_name))
 
-         # 4️⃣ Insert each item into order_items table
+        # 5️⃣ Insert each item into order_items
         for item in order_items:
             good_name = item['good_name']
             quantity = item['quantity']
             price_at_order = item['price_at_order']
 
-            # Get good_number from products table
             cursor.execute("SELECT good_number FROM products WHERE good_name = %s", (good_name,))
-            good_row = cursor.fetchone()
-            if not good_row:
-                # Skip items not found in products table
-                continue
-            good_number = good_row['good_number']
+            product_row = cursor.fetchone()
+            if not product_row:
+                continue  # skip missing products
+
+            good_number = product_row['good_number']
 
             cursor.execute("""
                 INSERT INTO order_items (order_id, good_number, quantity, price_at_order)
                 VALUES (%s, %s, %s, %s)
             """, (order_id, good_number, quantity, price_at_order))
-        
-        
+
         conn.commit()
         cursor.close()
         conn.close()

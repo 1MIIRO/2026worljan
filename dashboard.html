@@ -86,9 +86,12 @@
     <div id="orderContainer" class="order-container">
         <div class="order-top-bar" style="display:flex; align-items:center; gap:10px;">
             <!-- Left notepad button -->
-            <button class="btn btn-light btn-sm">
+            <button id="notepadButton" class="btn btn-light btn-sm">
                 <img src="{{ url_for('static', filename='images/nootpad_icon.jpg') }}" style="width:16px;">
             </button>
+
+            <!-- Hidden field to show current description -->
+             <div id="currentDescription" style="display:none;">{{ order_description }}</div>
 
             <!-- Editable texts in the middle -->
             <div class="order-texts" style="display:flex; flex-direction:column; flex:1; gap:2px;">
@@ -109,7 +112,7 @@
                     {% for table in tables %}
                         <div class="dropdown-item" data-id="{{ table.Table_db_id }}" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
                             <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                            Table {{ table.Table_number }}
+                            {{ table.Table_number }}
                         </div>
                     {% endfor %}
                 </div>
@@ -118,7 +121,7 @@
                 <button class="dropdown-btn">Select Order Type ▼</button>
                 <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto;">
                     {% for category in order_categories %}
-                        <div class="dropdown-item" data-id="{{ table.Table_db_id }}" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                        <div class="dropdown-item" data-id="{{ category.order_categories_ID }}" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
                             <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
                             {{ category.order_categories_name }}
                         </div>
@@ -238,41 +241,65 @@
     <div class="product-display">
     {% for item in products %}
         <div class="product-card"
-            data-description="{{ item['description'] }}"
             data-name="{{ item['good_name'] }}"
-            data-price="{{ item['price'] }}">
+            data-description="{{ item['description'] }}"
+            data-price="{{ item['price'] }}"
+            data-category="{{ product_category_map[item['good_number']] or 'Uncategorized' }}">
 
             <img src="{{ url_for('static', filename=item.image_path.replace('\\','/').split('static/')[1]) }}"
                 alt="{{ item.good_name }}">
 
             <div class="product-name">{{ item.good_name }}</div>
             <div class="product-price">${{ item.price }}</div>
+            <div class="product-category" style="font-size:12px; color:#555;">
+                {{ product_category_map[item['good_number']] or 'Uncategorized' }}
+            </div>
         </div>
     {% endfor %}
     </div>
 
-<!-- PRODUCT DETAIL MODAL -->
+    <!-- PRODUCT DETAIL MODAL -->
     <div id="productModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">
-        <div class="modal-content" style="background:white; border-radius:10px; max-width:400px; width:90%; padding:20px; position:relative;">
+        <div class="modal-content" style="background:white; border-radius:10px; max-width:400px; width:90%; padding:20px; position:relative; display:flex; flex-direction:column; gap:10px;">
+            
+            <!-- CLOSE BUTTON -->
             <span id="closeModal" style="position:absolute; top:10px; right:15px; font-size:20px; cursor:pointer;">&times;</span>
 
-            <img id="modalImage" src="" alt="Product Image" style="width:80%; height:150px; object-fit:cover; display:block; margin:0 auto 15px auto; border-radius:8px;">
+            <!-- PRODUCT IMAGE -->
+            <div style="display:flex; justify-content:center;">
+                <img id="modalImage" src="" alt="Product Image" style="width:80%; height:150px; object-fit:cover; border-radius:8px;">
+            </div>
 
-            <!-- UPDATED: Product description now displays from DB -->
-            <p id="modalDescription" style="margin-bottom:15px; font-size:14px; color:#333;"></p>
+            <!-- PRODUCT CATEGORY -->
+            <div id="modalCategory" style="font-size:13px; color:#555;">Category Name</div>
 
-            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:15px;">
+            <!-- PRODUCT NAME -->
+            <div id="modalName" style="font-weight:bold; font-size:16px;">Product Name</div>
+
+            <!-- PRODUCT DESCRIPTION -->
+            <p id="modalDescription" style="font-size:14px; color:#333; margin:0;">Product Description</p>
+
+            <!-- PRODUCT PRICE -->
+            <div id="modalPrice" style="font-weight:bold; color:green;">$0.00</div>
+
+            <!-- TEXT FIELD FOR ORDER DETAILS -->
+            <textarea id="orderDetails" placeholder="Add order notes..." style="width:100%; min-height:60px; border:1px solid #ccc; border-radius:6px; padding:5px; resize:none;"></textarea>
+
+            <!-- QUANTITY SELECTOR -->
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-top:5px;">
                 <button id="decreaseQty" style="padding:5px 10px;">-</button>
                 <span id="qtyCounter" style="font-weight:bold; min-width:20px; text-align:center;">1</span>
                 <button id="increaseQty" style="padding:5px 10px;">+</button>
             </div>
 
+            <!-- ADD TO KART BUTTON -->
             <button id="selectBtn" style="width:100%; padding:10px; background:#0d6efd; color:white; border:none; border-radius:8px; cursor:pointer;">
-                Select
+                ADD TO KART
             </button>
+
         </div>
     </div>
-    
+
     <!-- LEFT FLOATING TOGGLE (INDEPENDENT) -->
     <div id="trackOrderToggle" class="track-order-toggle">
         <span class="toggle-symbol">+</span>
@@ -292,6 +319,16 @@
             </div>
         </div>
 
+    <!-- NOTEPAD MODAL -->
+    <div id="notepadModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+        <div style="background:white; border-radius:10px; max-width:500px; width:90%; padding:20px; position:relative; display:flex; flex-direction:column; gap:10px;">
+            <span id="closeNotepad" style="position:absolute; top:10px; right:15px; font-size:20px; cursor:pointer;">&times;</span>
+            <h5>Order Notes</h5>
+            <div id="allNotesContainer" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;"></div>
+            <button id="saveNotes" style="padding:8px; background:#0d6efd; color:white; border:none; border-radius:6px; cursor:pointer;">Save Notes</button>
+        </div>
+    </div>
+
     <!-- SCRIPT -->
     <script>
     // DATE & TIME
@@ -302,6 +339,77 @@
         }
         setInterval(updateDateTime, 1000);
         updateDateTime();
+
+        const notepadButton = document.getElementById('notepadButton');
+        const notepadModal = document.getElementById('notepadModal');
+        const allNotesContainer = document.getElementById('allNotesContainer');
+        const closeNotepad = document.getElementById('closeNotepad');
+        const saveNotes = document.getElementById('saveNotes');
+
+        notepadButton.addEventListener('click', () => {
+            // Clear container
+            allNotesContainer.innerHTML = '';
+
+            // For each item, create a textarea to edit notes
+            tempOrderItems.forEach((item, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.flexDirection = 'column';
+                wrapper.style.gap = '3px';
+
+                const label = document.createElement('label');
+                label.textContent = `${item.name} (Qty: ${item.quantity})`;
+
+                const textarea = document.createElement('textarea');
+                textarea.value = item.notes || '';
+                textarea.dataset.index = index;
+                textarea.style.width = '100%';
+                textarea.style.minHeight = '50px';
+                textarea.style.resize = 'vertical';
+
+                wrapper.appendChild(label);
+                wrapper.appendChild(textarea);
+
+                allNotesContainer.appendChild(wrapper);
+            });
+
+            notepadModal.style.display = 'flex';
+        });
+
+        // CLOSE NOTEPAD
+        closeNotepad.addEventListener('click', () => {
+            notepadModal.style.display = 'none';
+        });
+
+        saveNotes.addEventListener('click', () => {
+            const textareas = allNotesContainer.querySelectorAll('textarea');
+
+            textareas.forEach(textarea => {
+                const idx = textarea.dataset.index;
+                const newNotes = textarea.value.trim();
+                tempOrderItems[idx].notes = newNotes;
+
+                // Update display in orderItems
+                const itemRow = tempOrderItems[idx].element;
+                const notesDiv = itemRow.querySelector('.item-notes');
+                if (notesDiv) {
+                    if (newNotes) {
+                        notesDiv.textContent = `Notes: ${newNotes}`;
+                    } else {
+                        notesDiv.remove();
+                    }
+                } else if (newNotes) {
+                    const div = document.createElement('div');
+                    div.className = 'item-notes';
+                    div.style.fontSize = '12px';
+                    div.style.color = '#555';
+                    div.textContent = `Notes: ${newNotes}`;
+                    itemRow.querySelector('div[style*="flex:1"]').appendChild(div);
+                }
+            });
+
+            notepadModal.style.display = 'none';
+        });
 
         // ELEMENTS
         const orderToggle = document.getElementById('orderToggle');
@@ -472,50 +580,66 @@
             });
         });
 
-        // PRODUCT MODAL & ORDER BAR INTEGRATION
         const productCards = document.querySelectorAll('.product-card');
         const productModal = document.getElementById('productModal');
         const closeModal = document.getElementById('closeModal');
         const modalImage = document.getElementById('modalImage');
+        const modalCategory = document.getElementById('modalCategory');
+        const modalName = document.getElementById('modalName');
         const modalDescription = document.getElementById('modalDescription');
+        const modalPrice = document.getElementById('modalPrice');
         const qtyCounter = document.getElementById('qtyCounter');
         const decreaseQty = document.getElementById('decreaseQty');
         const increaseQty = document.getElementById('increaseQty');
         const selectBtn = document.getElementById('selectBtn');
+        const orderDetails = document.getElementById('orderDetails');
         const orderItems = document.getElementById('orderItems'); // MUST EXIST IN HTML
 
         let currentQty = 1;
         let selectedProduct = null;
 
+        // ----------------------
         // OPEN MODAL
+        // ----------------------
         productCards.forEach(card => {
-            card.addEventListener('click', () => {
+                card.addEventListener('click', () => {
                 modalImage.src = card.querySelector('img').src;
+                modalName.textContent = card.dataset.name;
                 modalDescription.textContent = card.dataset.description;
+                modalPrice.textContent = `$${card.dataset.price}`;
+                modalCategory.textContent = card.dataset.category || "Uncategorized";
+
                 currentQty = 1;
                 qtyCounter.textContent = currentQty;
+                orderDetails.value = "";
 
                 selectedProduct = {
                     name: card.dataset.name,
-                    price: card.dataset.price,
-                    imageSrc: card.querySelector('img').src
+                    price: Number(card.dataset.price),
+                    imageSrc: card.querySelector('img').src,
+                    category: card.dataset.category || "",
                 };
 
                 productModal.style.display = 'flex';
             });
         });
 
+        // ----------------------
         // CLOSE MODAL
+        // ----------------------
         closeModal.addEventListener('click', () => {
             productModal.style.display = 'none';
             selectedProduct = null;
         });
 
+        // ----------------------
         // QUANTITY CONTROLS
+        // ----------------------
         increaseQty.addEventListener('click', () => {
             currentQty++;
             qtyCounter.textContent = currentQty;
         });
+
         decreaseQty.addEventListener('click', () => {
             if (currentQty > 1) {
                 currentQty--;
@@ -523,46 +647,56 @@
             }
         });
 
-        // SELECT PRODUCT
+        // ----------------------
+        // SELECT PRODUCT / ADD TO KART
+        // ----------------------
+        
         selectBtn.addEventListener('click', () => {
-            if (!selectedProduct) return;
+                if (!selectedProduct) return;
 
-            const priceNum = Number(selectedProduct.price); // force number
-            const totalPrice = (priceNum * currentQty).toFixed(2);
+                const totalPrice = (selectedProduct.price * currentQty).toFixed(2);
+                const notesText = orderDetails.value.trim(); // <-- grab textarea content
 
-            const itemRow = document.createElement('div');
-            itemRow.style.display = 'flex';
-            itemRow.style.alignItems = 'center';
-            itemRow.style.gap = '10px';
-            itemRow.style.marginBottom = '8px';
+                // CREATE DISPLAY ITEM IN ORDER LIST
+                const itemRow = document.createElement('div');
+                itemRow.style.display = 'flex';
+                itemRow.style.alignItems = 'center';
+                itemRow.style.gap = '10px';
+                itemRow.style.marginBottom = '8px';
 
-            itemRow.innerHTML = `
-                <img src="${selectedProduct.imageSrc}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">
-                <div style="flex:1;">
-                    <div style="font-weight:bold;">${selectedProduct.name}</div>
-                    <div style="color:green;">$${totalPrice}</div>
-                </div>
-                <div>Qty: ${currentQty}</div>
-            `;
+                itemRow.innerHTML = `
+                    <img src="${selectedProduct.imageSrc}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;">${selectedProduct.name}</div>
+                        <div style="color:green;">$${totalPrice}</div>
+                    </div>
+                    <div>Qty: ${currentQty}</div>
+                `;
 
-            orderItems.appendChild(itemRow);
+                orderItems.appendChild(itemRow);
 
-            tempOrderItems.push({
-                name: selectedProduct.name,
-                price: priceNum,
-                quantity: currentQty,
-                sub_total: priceNum * currentQty, // numeric value
-                imageSrc: selectedProduct.imageSrc
+                // SAVE ITEM TO TEMP ORDER
+                tempOrderItems.push({
+                    name: selectedProduct.name,
+                    price: selectedProduct.price,
+                    quantity: currentQty,
+                    sub_total: selectedProduct.price * currentQty,
+                    imageSrc: selectedProduct.imageSrc,
+                    category: selectedProduct.category,
+                    notes: notesText,
+                    element: itemRow // allows editing later
+                });
+
+                // CLOSE MODAL
+                productModal.style.display = 'none';
+                selectedProduct = null;
+
+                // UPDATE TOTALS
+                updateSubtotal();
+                updateTaxDisplay();
+                updateTotal();
             });
 
-            productModal.style.display = 'none';
-            selectedProduct = null;
-
-            updateSubtotal();
-            updateTaxDisplay();
-            updateTotal();
-        });
-        
         function updateSubtotal() {
             const subtotalEl = document.querySelector('.billing-row span.amount'); // first .amount span
             const subtotal = tempOrderItems.reduce((acc, item) => acc + item.sub_total, 0);
@@ -582,7 +716,7 @@
             document.getElementById('taxAmount').textContent = `$${Number(tax.toFixed(2))}`;
         }
 
-            // PROMO-CODE BUTTON FUNCTIONALITY
+        // PROMO-CODE BUTTON FUNCTIONALITY
         const promoBtn = document.querySelector('.pill-btn_order'); // assumes first button is Promo-code
         const discountDisplay = document.getElementById('discountDisplay');
 
@@ -648,6 +782,11 @@
                 alert('Please select a table');
                 return;
             }
+            
+            const order_description = tempOrderItems
+            .filter(item => item.notes && item.notes.trim() !== "")
+            .map(item => `${item.name}: ${item.notes}`)
+            .join('\n');
 
             // --- Grab product data from Display Screen 1 ---
             const orderItemsRows = Array.from(orderItems.children);
@@ -710,7 +849,8 @@
                     order_type: orderType,
                     customer_name: customerName,
                     table_id: tableId,
-                    order_items: orderItemsData  // each item will be iterated in Flask route
+                    order_items: orderItemsData,
+                    order_desc: order_description
                 })
             })
             .then(res => res.json())
@@ -759,51 +899,20 @@
       // Select the container
       const trackOrdersContainer = document.querySelector('#trackDrawerContent .track-scroll');
 
-function loadTrackOrders() {
-    fetch('/trackhome_orders')
-        .then(res => res.json())
-        .then(orders => {
-            if (!Array.isArray(orders) || orders.length === 0) {
-                trackOrdersContainer.innerHTML = '<p>No orders found</p>';
-                return;
+        async function fetchNewOrderNumber() {
+            try {
+                const res = await fetch('/get_new_order_number');
+                const data = await res.json();
+                orderNumberDiv.textContent = data.order_number;
+            } catch (err) {
+                console.error('Failed to fetch order number:', err);
+                orderNumberDiv.textContent = '######';
             }
+        }
 
-            trackOrdersContainer.innerHTML = ''; // clear previous
+        // Fetch a new order number on page load
+        fetchNewOrderNumber();
 
-            orders.forEach(order => {
-                const pill = document.createElement('div');
-                pill.classList.add('order-pill');
-                pill.style.border = '1px solid #ccc';
-                pill.style.padding = '8px';
-                pill.style.marginBottom = '6px';
-                pill.style.borderRadius = '4px';
-                pill.style.backgroundColor = '#f9f9f9';
-
-                pill.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <span class="customer-name">${order.customer_name}</span>
-                        <select class="order-status">
-                            <option value="on_kitchen_hand" selected>on_kitchen_hand</option>
-                            <option value="all_done">all_done</option>
-                        </select>
-                    </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span class="table-type">${order.Table_number}.${order.order_type}</span>
-                        <span class="order-time">${order.order_time}</span>
-                    </div>
-                `;
-
-                trackOrdersContainer.appendChild(pill);
-            });
-        })
-        .catch(err => {
-            console.error('Error fetching orders:', err);
-            trackOrdersContainer.innerHTML = '<p>Error loading orders</p>';
-        });
-}
-
-// Call on page load
-loadTrackOrders();
 
 
     </script>
