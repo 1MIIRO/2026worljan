@@ -9,51 +9,44 @@ import string
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Required for sessions
 
-# --- CONFIG ---
-ORDER_HISTORY_FILE = "order_history.json"  # store past order numbers and count
-
-# Load or initialize
+import random
+import string
 import json
+from flask import Flask
+
+# --- ORDER NUMBER MANAGEMENT ---
+ORDER_HISTORY_FILE = "order_history.json"
+
+# Load or initialize order history
 try:
     with open(ORDER_HISTORY_FILE, "r") as f:
         order_history = json.load(f)
 except:
-    order_history = {"last_letter_index": 0, "last_letter_repeat": 1, "letter_count": 0, "used_numbers": []}
+    order_history = {
+        "last_letter_index": 0,  # Current letter index in A-Z
+        "last_letter_repeat": 1, # How many times the letter is repeated
+        "letter_count": 0,       # Count orders for this letter
+        "used_numbers": [],      # Already used 6-digit numbers
+        "current_order_number": ""  # The number currently displayed
+    }
 
 def get_letter_suffix():
-    """
-    Determines the current letter suffix based on letter_count.
-    Every 10 orders, it moves to the next letter.
-    After Z -> AA, BB, ..., then AAA, BBB, etc.
-    """
     letters = string.ascii_uppercase
-    count = order_history["letter_count"]
-    repeat = order_history["last_letter_repeat"]
-    
-    # Calculate which letter
     idx = order_history["last_letter_index"]
-    
-    # Build suffix
-    if idx < 26:
-        suffix = letters[idx] * repeat
-    else:
-        # Once past Z, keep repeating the last letters as needed
-        suffix = letters[idx % 26] * repeat
-
-    return suffix
+    repeat = order_history["last_letter_repeat"]
+    letter = letters[idx % 26]
+    return letter * repeat
 
 def increment_letter_count():
-    """Increment counters after each order and update repeat if needed"""
     order_history["letter_count"] += 1
     if order_history["letter_count"] >= 10:
         order_history["letter_count"] = 0
         order_history["last_letter_index"] += 1
-        if order_history["last_letter_index"] >= 26 * order_history["last_letter_repeat"]:
+        if order_history["last_letter_index"] >= 26:
             order_history["last_letter_index"] = 0
             order_history["last_letter_repeat"] += 1
 
 def generate_unique_number():
-    """Generate a 6-digit number never used before"""
     while True:
         number = random.randint(100000, 999999)
         if number not in order_history["used_numbers"]:
@@ -61,15 +54,26 @@ def generate_unique_number():
             return number
 
 def generate_order_number():
+    """Generates a new order number and stores it as the current number"""
     number = generate_unique_number()
     suffix = get_letter_suffix()
     increment_letter_count()
-
-    # Save history
+    full_order_number = f"#{number}{suffix}"
+    
+    # Save as the current displayed order number
+    order_history["current_order_number"] = full_order_number
+    
+    # Save order history to JSON
     with open(ORDER_HISTORY_FILE, "w") as f:
         json.dump(order_history, f)
+    
+    return full_order_number
 
-    return f"#{number}{suffix}"
+def get_current_order_number():
+    """Returns the current order number without generating a new one"""
+    if not order_history.get("current_order_number"):
+        return generate_order_number()
+    return order_history["current_order_number"]
 
 # Database connection function
 def get_connection():
@@ -240,8 +244,9 @@ def dashboard():
     tables = cursor.fetchall()
     cursor.close()
     conn.close()
+    current_order_number = get_current_order_number()
     order_description = session.get("order_description", "")
-    return render_template('dashboard.html', user=user_info, products=products,tables=tables,order_categories=order_categories, product_categories=product_categories,product_category_map=product_category_map,order_description=order_description)
+    return render_template('dashboard.html', user=user_info, products=products,tables=tables,order_categories=order_categories, product_categories=product_categories,product_category_map=product_category_map,order_description=order_description,current_order_number=current_order_number)
 
 @app.route('/description', methods=['GET', 'POST'])
 def description_page():
@@ -361,11 +366,13 @@ def place_order_table():
 
     data = request.get_json()
     order_type_val = data.get('order_type')        # 'Dine_in', 'Take_away', 'Delivery'
-    order_number = data.get('order_number')
     customer_name = data.get('customer_name')
     table_id = data.get('table_id')
     order_items = data.get('order_items')
-    order_desc = data.get('order_desc')         
+    order_desc = data.get('order_desc')
+
+    # Use the current displayed order number
+    order_number = get_current_order_number()
 
     # Validate required fields
     if not order_number or not order_type_val or not customer_name or not table_id or not order_items:
@@ -390,13 +397,13 @@ def place_order_table():
                 order_identification_number,
                 items_count,
                 order_state,
-                order_desc,       
+                order_desc,
                 user_id,
                 Total_ammount,
                 DATE,
                 TIME,
                 LAST_UPDATE
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             order_number,
             items_count,
@@ -454,11 +461,15 @@ def place_order_table():
                 VALUES (%s, %s, %s, %s)
             """, (order_id, good_number, quantity, price_at_order))
 
+        # Commit all inserts
         conn.commit()
         cursor.close()
         conn.close()
 
-        return jsonify({"success": True, "order_id": order_id})
+        # ✅ Generate a new order number for the next order
+        generate_order_number()  # this updates order_history.json
+
+        return jsonify({"success": True, "order_id": order_id, "order_number": order_number})
 
     except Exception as e:
         print("Database Error:", e)
