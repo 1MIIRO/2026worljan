@@ -22,7 +22,8 @@ VALUES
 ('john_doe4', 'Alex Kim', '12345', 'Receptionist');
 
 *********************************************************************************
-
+ DROP TABLE products;
+ 
 products
 
 		CREATE TABLE products (
@@ -145,22 +146,24 @@ products
 
 
 ********************************************************************************************************************8
+DROP TABLE product_categories;
 
 CREATE TABLE product_categories (
     product_category_number INT AUTO_INCREMENT PRIMARY KEY,
     product_category_name VARCHAR(255) NOT NULL
 );
-INSERT INTO products (product_category_name) VALUES
-			('Bread'),
-            ('Cake'),
-            ('Donuts'),
-            ('pastries'),
-            ('Sandwich'
-			);
+INSERT INTO product_categories (product_category_number, product_category_name) VALUES
+(1, 'Bread'),
+(2, 'Cake'),
+(3, 'Donuts'),
+(4, 'Pastries'),
+(5, 'Sandwich');
+
 
 
 ************************************************************************************
 
+DROP TABLE products_category_table;
 
 products_category_table
 
@@ -168,8 +171,6 @@ products_category_table
 CREATE TABLE products_category_table (
     product_number INT NOT NULL,
     product_category_number INT NOT NULL,
-
-    PRIMARY KEY (product_number, product_category_number),
 
     CONSTRAINT fk_pct_product
         FOREIGN KEY (product_number)
@@ -182,55 +183,41 @@ CREATE TABLE products_category_table (
         ON DELETE CASCADE
 );
 
--- Bread category = 1
 INSERT INTO products_category_table (product_number, product_category_number) VALUES
-(10, 1), -- french_bread
-(11, 1), -- italian_bread
-(3, 1),  -- cake_bread
-(14, 1), -- sliced_bread
-(15, 1); -- soughdough_bread
+(1, 2),   -- banana_cake
+(2, 2),   -- blackforest_cake
+(3, 1),   -- cake_bread
+(4, 2),   -- cheese_cake
+(5, 2),   -- chiffon_cake
+(6, 2),   -- butter_cake
+(7, 2),   -- choclate_mouse
+(8, 2),   -- choclate_cake
+(9, 3),   -- cream_cupcake
+(10, 1),  -- french_bread
+(11, 1),  -- italian_bread
+(12, 2),  -- lemon_cake
+(13, 2),  -- poundcake
+(14, 1),  -- sliced_bread
+(15, 1),  -- soughdough_bread
+(16, 2),  -- sponge_cake
+(17, 2),  -- strawberry_mouse
+(18, 2),  -- tiramisu_cake
+(19, 3),  -- yeast_donut
+(20, 3),  -- jelly_doughnut
+(21, 3),  -- glazed_doughnut
+(22, 3),  -- Cruller_Doughnut
+(23, 3),  -- Cinnamon Bun
+(24, 3),  -- Chocolate Doughnut
+(25, 3),  -- Boston Cream Doughnut
+(26, 4),  -- Scone
+(27, 5),  -- Gourmet Burger
+(28, 5),  -- Grilled Chicken & Cheese Sandwich
+(29, 5),  -- Salad Sandwich
+(30, 5),  -- Pita Bread Sandwich
+(31, 5),  -- Grilled Cheese Sandwich
+(32, 5),  -- Chef’s Choice Burger
+(33, 5);  -- Double Decker Cheese Sandwich
 
--- Cake category = 2
-INSERT INTO products_category_table (product_number, product_category_number) VALUES
-(1, 2),  -- banana_cake
-(2, 2),  -- blackforest_cake
-(5, 2),  -- chiffon_cake
-(6, 2),  -- butter_cake
-(8, 2),  -- choclate_cake
-(16, 2), -- sponge_cake
-(18, 2), -- tiramisu_cake
-(12, 2), -- lemon_cake
-(13, 2), -- poundcake
-(4, 2);  -- cheese_cake
-
--- Donuts category = 3
-INSERT INTO products_category_table (product_number, product_category_number) VALUES
-(19, 3), -- yeast_donut
-(20, 3), -- jelly_doughnut
-(21, 3), -- glazed_doughnut
-(22, 3), -- Cruller_Doughnut
-(9, 3),  -- Boston_Cream_Doughnut
-(7, 3),  -- Chocolate_Doughnut
-(1, 3),  -- Churro (assuming good_number=1)
-(23, 3); -- Cinnamon_Bun
-
--- Pastries category = 4
-INSERT INTO products_category_table (product_number, product_category_number) VALUES
-(14, 4), -- Pain_aux_Raisins
-(24, 4), -- Fruit_Cake
-(15, 4), -- Crème_Brûlée
-(25, 4), -- Waffles
-(26, 4); -- Scone
-
--- Sandwich category = 5
-INSERT INTO products_category_table (product_number, product_category_number) VALUES
-(27, 5), -- Gourmet_Burger
-(28, 5), -- Grilled_Chicken_&_Cheese_Sandwich
-(29, 5), -- Salad_Sandwich
-(30, 5), -- Pita_Bread_Sandwich
-(31, 5), -- Grilled_Cheese_Sandwich
-(32, 5), -- Chef’s_Choice_Burger
-(33, 5); -- Double_Decker_Cheese_Sandwich
 
 
 **************************************************************************************************
@@ -655,6 +642,7 @@ CREATE TABLE orders_improved_table (
     order_identification_number INT NOT NULL,
     items_count INT NOT NULL,
     order_state VARCHAR(50) NOT NULL,
+    order_desc TEXT,
     user_id INT NOT NULL,
     Total_ammount DOUBLE NOT NULL,
     DATE DATE NOT NULL,
@@ -675,12 +663,14 @@ CREATE TABLE orders_improved_table (
 | order_identification_number | int         | NO   |     | NULL    |                |
 | items_count                 | int         | NO   |     | NULL    |                |
 | order_state                 | varchar(50) | NO   |     | NULL    |                |
+| order_desc                  | text        | YES  |     | NULL    |                |
 | user_id                     | int         | NO   | MUL | NULL    |                |
 | Total_ammount               | double      | NO   |     | NULL    |                |
 | DATE                        | date        | NO   |     | NULL    |                |
 | TIME                        | time        | NO   |     | NULL    |                |
 | LAST_UPDATE                 | datetime    | NO   |     | NULL    |                |
 +-----------------------------+-------------+------+-----+---------+----------------+
+10 rows in set (0.04 sec)
 
 *****************************************************************************
 
@@ -716,29 +706,19 @@ CREATE TABLE order_with_categories (
 );
 
 
-
-        # Get good_number from products table
-            cursor.execute("SELECT order_categories_ID FROM order_categories WHERE order_categories_name = = %s", (order_categories_name,))
-            order_category_row = cursor.fetchone()
-            if not order_category_row:
-                # Skip items not found in products table
-                continue
-            order_categories_ID = order_category_row['order_categories_ID']
-
-            cursor.execute("""
-                INSERT INTO order_with_categories (order_ID,order_categories_ID)
-                VALUES (%s, %s)
-            """, (order_ID,order_categories_ID))
-        
-
 ****************************************************************************
+DROP TABLE IF EXISTS customer_order;
+
+
 
 -- Customer Order table
 CREATE TABLE customer_order (
     customer_order_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
+    order_ID INT NOT NULL,
     customer_name VARCHAR(255) NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+	Table_db_id INT NOT NULL,
+	FOREIGN KEY (Table_db_id) REFERENCES tables(Table_db_id) ON DELETE CASCADE,
+    FOREIGN KEY (order_ID) REFERENCES orders_improved_table(order_ID) ON DELETE CASCADE
 );
 
 *****************************************************************************
@@ -775,45 +755,109 @@ CREATE TABLE Order_detials (
 | order_detials         | text   | YES  |     | NULL    |                |
 | Total                 | double | NO   |     | NULL    |                |
 +-----------------------+--------+------+-----+---------+----------------+
-
- # 4️⃣ Insert each item into Order_detials table
-        for item in order_items:
-            good_name = item['good_name']
-            quantity = item['quantity']
-            price_at_order = item['price_at_order']
-
-            # Get good_number from products table
-            cursor.execute("SELECT good_number FROM products WHERE good_name = %s", (good_name,))
-            good_row = cursor.fetchone()
-            if not good_row:
-                # Skip items not found in products table
-                continue
-            good_number = good_row['good_number']
-
-            cursor.execute("""
-                INSERT INTO Order_detials (order_refrence_number, product_purchased, item_quantities,order_detials,price_at_order)
-                VALUES (%s, %s, %s, %s)
-            """, (order_id, good_number, quantity, price_at_order))
-        
+       
 *****************************************************************************
-
-
--- Order Completion Status table
-CREATE TABLE order_completion_status (
-    completion_id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    completed_at DATETIME,
-    preparation_duration INT, -- in minutes
-    completion_status ENUM('on_kitchen_hand','all_done') NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+CREATE TABLE order_status (
+    order_status_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_status VARCHAR(50) NOT NULL UNIQUE
 );
 
++-----------------+-------------+------+-----+---------+----------------+
+| Field           | Type        | Null | Key | Default | Extra          |
++-----------------+-------------+------+-----+---------+----------------+
+| order_status_id | int         | NO   | PRI | NULL    | auto_increment |
+| order_status    | varchar(50) | NO   | UNI | NULL    |                |
++-----------------+-------------+------+-----+---------+----------------+
+2 rows in set (0.02 sec)
+
+INSERT INTO order_status (order_status) VALUES
+('pending'),
+('in_progress'),
+('complete'),
+('cancelled');
+
+
 *****************************************************************************
+CREATE TABLE order_payment_status (
+    order_payment_status_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_payment_status VARCHAR(50) NOT NULL UNIQUE
+);
+
++-------------------------+-------------+------+-----+---------+----------------+
+| Field                   | Type        | Null | Key | Default | Extra          |
++-------------------------+-------------+------+-----+---------+----------------+
+| order_payment_status_id | int         | NO   | PRI | NULL    | auto_increment |
+| order_payment_status    | varchar(50) | NO   | UNI | NULL    |                |
++-------------------------+-------------+------+-----+---------+----------------+
+2 rows in set (0.04 sec)
+
+************************************************************************************
+
+
+
+
+
+
+
+SELECT
+    o.order_ID,
+    co.customer_name,
+    t.Table_number,
+    oc.order_categories_name,
+    o.TIME,               -- use the actual column name
+    p.good_name,
+    od.item_quantities,
+    o.items_count
+FROM orders_improved_table o
+LEFT JOIN customer_order co
+    ON o.order_ID = co.order_ID
+LEFT JOIN tables t
+    ON co.Table_db_id = t.Table_db_id
+LEFT JOIN order_with_categories owc
+    ON o.order_ID = owc.order_ID
+LEFT JOIN order_categories oc
+    ON owc.order_categories_ID = oc.order_categories_ID
+LEFT JOIN order_detials od
+    ON o.order_ID = od.order_refrence_number
+LEFT JOIN products p
+    ON od.product_purchased = p.good_number
+ORDER BY o.TIME DESC;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 CREATE TABLE tax_discount_table (
          TAX_RATE INT NOT NULL,
          discount_amount INT NOT NULL,
          discount_status VARCHAR(50) NOT NULL
      );
+
+
+
+
+
 
 
 

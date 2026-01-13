@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity - Billing Queue</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='activity_billing_queue.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="sidebar">
+        <div class="p-3">
+            <h5>{{ user.personal_name }}</h5>
+            <p>{{ user.job_desc }}</p>
+        </div>
+        <ul class="list-unstyled ps-3">
+            <li><a href="{{ url_for('dashboard') }}">Point_of_sales</a></li>
+            <li><a href="{{ url_for('activity_billing_queue') }}">Activity</a></li>
+            <li><a href="#">Inventory</a></li>
+            <li><a href="#">Teams</a></li>
+            <li><a href="#">Settings</a></li>
+        </ul>
+    </div>
+
+    <!-- ORDER PANEL -->
+    <div id="orderContainer" class="order-container">
+        <div class="order-top-bar" style="display:flex; align-items:center; gap:10px;">
+            <!-- Left notepad button -->
+            <button class="btn btn-light btn-sm">
+                <img src="{{ url_for('static', filename='images/nootpad_icon.jpg') }}" style="width:16px;">
+            </button>
+
+            <!-- Editable texts in the middle -->
+            <div class="order-texts" style="display:flex; flex-direction:column; flex:1; gap:2px;">
+                <div id="customerName" contenteditable="false" class="editable-text">Customer Name</div>
+                <div id="orderNumber" contenteditable="false" class="editable-text">Order Number</div>
+            </div>
+            
+            <!-- Right pencil button -->
+            <button id="editPencil" class="btn btn-light btn-sm">
+                <img src="{{ url_for('static', filename='images/pencil_icon.jpg') }}" style="width:16px;">
+            </button>
+        </div>
+
+        <div class="order-dropdowns p-2">
+            <div class="dropdown">
+                <button class="dropdown-btn">Select Table ▼</button>
+                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                    {% for table in tables %}
+                        <div class="dropdown-item" data-id="{{ table.Table_db_id }}" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                            <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
+                            Table {{ table.Table_number }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-btn" data-default-text="Order Type">Order Type ▼</button>
+                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000;">
+                    <div class="dropdown-item" data-id="dine_in" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
+                        Dine_in
+                    </div>
+                    <div class="dropdown-item" data-id="takeaway" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
+                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
+                        Takeaway
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="order-display-screens" style="display:flex; flex-direction:column; gap:10px; margin-top:0px;">
+            <!-- Display Screen 1 (twice as big) -->
+            <div class="display-screen display-screen-1">
+                <p>-------------</p>
+            </div>
+
+            <!-- Display Screen 2 -->
+            <div class="display-screen display-screen-2">
+                <div class="billing-summary">
+                    
+                    <div class="billing-row">
+                        <span>Subtotal</span>
+                        <span class="amount">$</span>
+                    </div>
+
+                    <div class="billing-row">
+                        <span>Tax (10%)</span>
+                        <span class="amount">$</span>
+                    </div>
+
+                    <div class="billing-row">
+                        <span>Discount</span>
+                        <span class="amount">$</span>
+                    </div>
+
+                    <div class="billing-separator"></div>
+
+                    <div class="billing-row total">
+                        <span>TOTAL</span>
+                        <span class="amount">$</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        
+        <div class="order-button-container">
+
+            <!-- TOP ROW -->
+            <div class="button-top">
+                <button class="pill-btn_order">Promo-code</button>
+                <button class="pill-btn_order">QRS</button>
+            </div>
+
+            <!-- BOTTOM ROW -->
+            <div class="button-bottom">
+                <button class="big-action-btn">PLACE ORDER</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar d-flex align-items-center">
+        <div id="menuToggle" class="menu-icon">&#9776;</div>
+
+        <div class="breadcrumb ms-3">
+            <span class="breadcrumb-main">Activity</span>
+            <span class="breadcrumb-sub"> / Billing Queue</span>
+        </div>
+
+        <div class="ms-auto d-flex align-items-center gap-2 top-bar-item">
+            <div class="date-box d-flex align-items-center gap-1">
+                <button class="icon-button">
+                    <img src="{{ url_for('static', filename='images/calendar_icon.jpg') }}" class="icon-img">
+                </button>
+                <span id="dateText">--/--/----</span>
+            </div>
+
+            <div id="orderToggle" class="open-order top-bar-item">Open Order</div>
+        </div>
+    </div>
+
+    <!-- MAIN ACTIVITY CONTENT -->
+    <div id="activityMain">
+
+        <div class="container-fluid mt-3">
+            <div class="row align-items-center">
+                <div class="col-3">
+                    <input id="search_activity" type="search"
+                        class="form-control rounded-input"
+                        placeholder="Search...">
+                </div>
+            
+            <div class="col-9 d-flex gap-3 pill-wrapper">
+                    <button class="pill-btn">ALL</button>
+                    <button class="pill-btn">ACTIVE</button>
+                    <button class="pill-btn">CLOSED</button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="container-fluid mt-3">
+            <div class="row">
+                <div class="col-3">
+                    <div class="vertical-container">
+                        <a href="{{ url_for('activity_billing_queue') }}" class="active">Billing Queue</a>
+                        <a href="{{ url_for('activity_Tables') }}">Tables</a>
+                        <a href="{{ url_for('activity_Order_history') }}">Order History</a>
+                    </div>
+                </div>
+                <div class="col-9">
+                    <div class="activity-display-screen">
+                        <p class="activity-display-text">
+                            Billing queue items will appear here…
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+        <!-- ORDER DISPLAY CARDS -->
+    <div id="orderCardsDrawer">
+        <div id="orderCardsHandle" class="track-handle">
+            <span id="orderCardsSymbol">+</span>
+            <span class="track-text">Recent Orders</span>
+        </div>
+
+        <div id="orderCardsContent" class="track-scroll">
+            <!-- Order cards will be appended here -->
+        </div>
+    </div>
+
+
+
+    <!-- SCRIPT -->
+    <script>
+        const orderToggle = document.getElementById('orderToggle');
+        const sidebar = document.getElementById('sidebar');
+        const orderContainer = document.getElementById('orderContainer');
+        const menuToggle = document.getElementById('menuToggle');
+        const activityMain = document.getElementById('activityMain');
+        const topBarItems = document.querySelectorAll('.top-bar-item');
+
+        function shiftUI(shiftSidebar, shiftOrder) {
+            if (shiftSidebar) {
+                activityMain.classList.add('shifted-left');
+                topBarItems.forEach(el => el.classList.add('shifted-left-time'));
+            } else {
+                activityMain.classList.remove('shifted-left');
+                topBarItems.forEach(el => el.classList.remove('shifted-left-time'));
+            }
+
+            if (shiftOrder) {
+                activityMain.classList.add('shifted-right');
+                topBarItems.forEach(el => el.classList.add('shifted-right-time'));
+            } else {
+                activityMain.classList.remove('shifted-right');
+                topBarItems.forEach(el => el.classList.remove('shifted-right-time'));
+            }
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('dateText').textContent = now.toLocaleDateString();
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        menuToggle.addEventListener('click', () => {
+            orderContainer.classList.remove("active");
+            orderToggle.textContent = "Open Order";
+            orderToggle.className = "open-order top-bar-item";
+
+            sidebar.classList.toggle('active');
+            shiftUI(sidebar.classList.contains('active'), false);
+        });
+
+        orderToggle.addEventListener('click', () => {
+            if (orderToggle.textContent === "Open Order") {
+                orderContainer.classList.add("active");
+                orderToggle.textContent = "Close Order";
+                orderToggle.className = "close-order top-bar-item";
+
+                sidebar.classList.remove('active');
+                shiftUI(false, true);
+            } else {
+                orderContainer.classList.remove("active");
+                orderToggle.textContent = "Open Order";
+                orderToggle.className = "open-order top-bar-item";
+
+                shiftUI(false, false);
+            }
+        });
+
+        // Clicking sidebar closes it
+        sidebar.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            shiftUI(false, orderContainer.classList.contains('active'));
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Initialize all dropdown buttons
+            document.querySelectorAll('.dropdown-btn').forEach(btn => {
+                // Store the default text if not already stored
+                if (!btn.dataset.defaultText) {
+                    btn.dataset.defaultText = btn.textContent.replace(' ▼','');
+                }
+
+                // Toggle dropdown display
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const content = this.nextElementSibling;
+                    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+                });
+            });
+
+            // Function to handle selection/unselection
+            function setupDropdownItems(dropdownItems) {
+                dropdownItems.forEach(item => {
+                    // Single click = select
+                    item.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const dropdownBtn = this.closest('.dropdown').querySelector('.dropdown-btn');
+                        
+                        // Update button text
+                        dropdownBtn.textContent = this.textContent + ' ▼';
+                        dropdownBtn.dataset.selectedId = this.dataset.id;
+
+                        // Remove highlight from all dots in this dropdown
+                        this.parentElement.querySelectorAll('.dot').forEach(dot => dot.style.background = 'transparent');
+
+                        // Highlight the dot for this selection
+                        this.querySelector('.dot').style.background = 'lightblue';
+
+                        console.log('Selected ID:', this.dataset.id);
+                        // Dropdown stays open
+                    });
+
+                    // Double click = unselect
+                    item.addEventListener('dblclick', function(e) {
+                        e.stopPropagation();
+                        const dropdownBtn = this.closest('.dropdown').querySelector('.dropdown-btn');
+
+                        // Reset button text and selected ID
+                        dropdownBtn.textContent = dropdownBtn.dataset.defaultText + ' ▼';
+                        delete dropdownBtn.dataset.selectedId;
+
+                        // Reset dot
+                        this.querySelector('.dot').style.background = 'transparent';
+
+                        console.log('Option unselected');
+                    });
+                });
+            }
+
+            // Apply to all dropdown items
+            document.querySelectorAll('.dropdown-content').forEach(content => {
+                setupDropdownItems(content.querySelectorAll('.dropdown-item'));
+            });
+
+            // Close any dropdown if clicked outside
+            document.addEventListener('click', function() {
+                document.querySelectorAll('.dropdown-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+            });
+
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const pencilBtn = document.getElementById('editPencil');
+            const customerName = document.getElementById('customerName');
+            const orderNumber = document.getElementById('orderNumber');
+
+            // Store original/default values
+            const defaultCustomerName = customerName.textContent;
+            const defaultOrderNumber = orderNumber.textContent;
+
+            let isEditing = false; // Track edit mode
+
+            pencilBtn.addEventListener('click', function() {
+                if (!isEditing) {
+                    // Enter edit mode
+                    isEditing = true;
+                    customerName.contentEditable = "true";
+                    orderNumber.contentEditable = "true";
+
+                    // Optional: highlight editable fields
+                    customerName.style.borderBottom = "1px dashed #000";
+                    orderNumber.style.borderBottom = "1px dashed #000";
+
+                    customerName.focus(); // focus first field
+                } else {
+                    // Save or reset changes
+                    isEditing = false;
+                    customerName.contentEditable = "false";
+                    orderNumber.contentEditable = "false";
+
+                    // Remove highlight
+                    customerName.style.borderBottom = "none";
+                    orderNumber.style.borderBottom = "none";
+
+                    // If fields are empty, reset to defaults
+                    if (customerName.textContent.trim() === "") customerName.textContent = defaultCustomerName;
+                    if (orderNumber.textContent.trim() === "") orderNumber.textContent = defaultOrderNumber;
+
+                    console.log("Saved Customer Name:", customerName.textContent);
+                    console.log("Saved Order Number:", orderNumber.textContent);
+                }
+            });
+        });
+
+    document.addEventListener('DOMContentLoaded', () => {
+    const content = document.getElementById('orderCardsContent');
+
+    async function fetchOrderCards() {
+        try {
+            const res = await fetch('/order_display_cards');
+            const orders = await res.json();
+
+            content.innerHTML = '';
+
+            orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+
+                // Header
+                const header = document.createElement('div');
+                header.className = 'order-header';
+                header.innerHTML = `
+                    <strong>${order.customer_name}</strong>
+                    <span style="float:right">
+                        <select>
+                            <option>Option 1</option>
+                            <option>Option 2</option>
+                        </select>
+                    </span>
+                    <div>${order.table_number} . ${order.category}</div>
+                    <div>${order.time}</div>
+                `;
+                card.appendChild(header);
+
+                // Items
+                const itemsContainer = document.createElement('div');
+                itemsContainer.className = 'items-container';
+
+                order.items.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'item-row';
+                    itemDiv.textContent = `${item.quantity} x ${item.good_name}`;
+                    if (index >= 3) itemDiv.style.display = 'none'; // hide extra
+                    itemsContainer.appendChild(itemDiv);
+                });
+
+                // See more button
+                if (order.items.length > 3) {
+                    const seeMore = document.createElement('button');
+                    seeMore.textContent = 'See more';
+                    seeMore.className = 'see-more-btn';
+                    seeMore.addEventListener('click', () => {
+                        const hiddenItems = itemsContainer.querySelectorAll('.item-row[style*="display: none"]');
+                        hiddenItems.forEach(i => i.style.display = 'block');
+                        seeMore.style.display = 'none';
+                    });
+                    card.appendChild(seeMore);
+                }
+
+                card.appendChild(itemsContainer);
+
+                // Footer: total items
+                const footer = document.createElement('div');
+                footer.className = 'order-footer';
+                footer.innerHTML = `
+                    <strong>Total Items:</strong> ${order.items_count}
+                `;
+                card.appendChild(footer);
+
+                content.appendChild(card);
+            });
+        } catch (err) {
+            console.error('Failed to fetch orders:', err);
+            content.innerHTML = '<div style="color:red;">Failed to load orders</div>';
+        }
+    }
+
+    fetchOrderCards();
+    setInterval(fetchOrderCards, 10000);
+});
+
+
+
+    </script>
+
+</body>
+</html>

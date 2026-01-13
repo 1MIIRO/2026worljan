@@ -60,7 +60,16 @@
 
         .product-name { font-weight: bold; font-size: 16px; margin-top: 8px; }
         .product-price { color: green; font-size: 15px; margin-top: 5px; }
-    </style>
+       
+         .order-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e74c3c;
+            background: #fdf2f2;
+            border: none;
+        }
+   
+   </style>
 </head>
 <body>
 
@@ -95,8 +104,11 @@
 
             <!-- Editable texts in the middle -->
             <div class="order-texts" style="display:flex; flex-direction:column; flex:1; gap:2px;">
-                <div id="customerName" contenteditable="false" class="editable-text">Customer Name</div>
-                <div id="orderNumber" contenteditable="false" class="editable-text">{{ current_order_number }}</div>
+                <div id="customerName" contenteditable="false" class="editable-text">Customer Name</div> 
+                <div>
+                    <strong><span id="orderNumber"style="color:#e74c3c; font-weight:bold; font-size:20px;">Loading...</span></strong>
+                </div>
+
             </div>
             
             <!-- Right pencil button -->
@@ -752,133 +764,135 @@
             document.getElementById('totalAmount').textContent = `$${total.toFixed(2)}`;
         }
 
-        const placeOrderBtn = document.querySelector('.big-action-btn');
-        const orderNumberDiv = document.getElementById('orderNumber');
-        const orderTypeBtn = document.querySelector('.dropdown-btn[data-default-text="Order Type"]');
-        const customerNameDiv = document.getElementById('customerName');
-        const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]');
+           document.addEventListener('DOMContentLoaded', () => {
+            const placeOrderBtn = document.querySelector('.big-action-btn');
+            const orderNumberDiv = document.getElementById('orderNumber');
+            const customerNameDiv = document.getElementById('customerName');
 
-      placeOrderBtn.addEventListener('click', () => {
-            const orderNumber = orderNumberDiv.textContent.trim();
-            const orderType = orderTypeBtn.dataset.selectedId; // dine_in or takeaway
-            const customerName = document.getElementById('customerName').textContent.trim();
-            const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]');
-            const tableId = tableBtn?.dataset.selectedId;
-
-            // --- Validation ---
-            if (!orderNumber || orderNumber === 'Order Number') {
-                alert('Please enter Order Number');
-                return;
-            }
-            if (!orderType) {
-                alert('Please select Order Type');
-                return;
-            }
-            if (!customerName || customerName === 'Customer Name') {
-                alert('Please enter Customer Name');
-                return;
-            }
-            if (!tableId) {
-                alert('Please select a table');
-                return;
-            }
-            
-            const order_description = tempOrderItems
-            .filter(item => item.notes && item.notes.trim() !== "")
-            .map(item => `${item.name}: ${item.notes}`)
-            .join('\n');
-
-            // --- Grab product data from Display Screen 1 ---
-            const orderItemsRows = Array.from(orderItems.children);
-
-            if (orderItemsRows.length === 0) {
-                alert('No products selected!');
-                return;
-            }
-
-            // Parse each row into {good_name, quantity, price}
-            const orderItemsData = orderItemsRows.map(row => {
-                let name = '';
-                let price = 0;
-                let quantity = 0;
-
-                const divs = row.querySelectorAll('div');
-                divs.forEach(div => {
-                    const rawText = div.textContent.trim();
-
-                    // PRICE ONLY
-                    if (rawText.startsWith('$')) {
-                        price = parseFloat(rawText.replace('$', '').trim());
+            // Function to fetch a new order number from the server
+            async function fetchNewOrderNumber() {
+                try {
+                    const res = await fetch('/get_next_order_number');
+                    const data = await res.json();
+                    if (data.order_number) {
+                        orderNumberDiv.textContent = data.order_number;
+                    } else {
+                        orderNumberDiv.textContent = '######';
+                        console.error(data.error);
                     }
-                    // QUANTITY
-                    else if (rawText.includes('Qty:')) {
-                        quantity = parseInt(rawText.replace('Qty:', '').trim(), 10);
-                    }
-                    // NAME — FIRST LINE ONLY
-                    else if (!name) {
-                        name = rawText.split('\n')[0].trim();
-                    }
-                });
+                } catch (err) {
+                    console.error(err);
+                    orderNumberDiv.textContent = '######';
+                }
+            }
 
-                if (!name || isNaN(price) || isNaN(quantity)) {
-                    console.error('Invalid item detected:', { name, quantity, price });
-                    return null;
+            // Initialize order number on page load
+            fetchNewOrderNumber();
+
+            placeOrderBtn.addEventListener('click', async () => {
+                // Grab dropdown buttons dynamically
+               const orderTypeBtn = document.querySelector('.dropdown-btn[data-default-text="Select Order Type"]');
+                       const orderType = orderTypeBtn?.textContent.replace(' ▼','').trim();  // <-- gets the name string
+
+                const tableBtn = document.querySelector('.dropdown-btn[data-default-text="Select Table"]') 
+                                || document.querySelectorAll('.dropdown-btn')[0]; // fallback
+
+                const orderNumber = orderNumberDiv.textContent.trim();
+                const customerName = customerNameDiv.textContent.trim();
+                const tableId = tableBtn?.dataset.selectedId;
+
+                // Validation
+                if (!orderNumber || orderNumber === 'Order Number') {
+                    alert('Please enter Order Number');
+                    return;
+                }
+                if (!orderType) {
+                    alert('Please select Order Type');
+                    return;
+                }
+                if (!customerName || customerName === 'Customer Name') {
+                    alert('Please enter Customer Name');
+                    return;
+                }
+                if (!tableId) {
+                    alert('Please select a table');
+                    return;
                 }
 
-                return { good_name: name,  quantity: quantity, price_at_order: price };
-            }).filter(Boolean);
+                // Grab notes
+                const order_description = tempOrderItems
+                    .filter(item => item.notes && item.notes.trim() !== "")
+                    .map(item => `${item.name}: ${item.notes}`)
+                    .join('\n');
 
-            if (orderItemsData.length === 0) {
-                alert('No valid items found!');
-                return;
-            }
-
-            // --- ALERT for testing ---
-            let alertMsg = 'Order Items:\n';
-            orderItemsData.forEach(item => {
-                alertMsg += `good_name: ${item.good_name}, quantity: ${item.quantity}, price: ${item.price_at_order}\n`;
-            });
-            alert(alertMsg);
-
-            // --- Send order + items to backend individually ---
-            fetch('/place_order_table', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order_number: orderNumber,
-                    order_type: orderType,
-                    customer_name: customerName,
-                    table_id: tableId,
-                    order_items: orderItemsData,
-                    order_desc: order_description
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Order placed successfully ✅');
-
-                    // Reset UI
-                    orderItems.innerHTML = '';
-                    tempOrderItems = [];
-                    document.querySelector('.billing-row span.amount').textContent = '$0.00';
-                    document.getElementById('taxAmount').textContent = '$0.00';
-                    document.getElementById('totalAmount').textContent = '$0.00';
-                } else {
-                    alert('Failed to place order ❌: ' + data.error);
+                // Grab order items
+                const orderItemsRows = Array.from(orderItems.children);
+                if (orderItemsRows.length === 0) {
+                    alert('No products selected!');
+                    return;
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Server error ❌');
+
+                const orderItemsData = orderItemsRows.map(row => {
+                    let name = '';
+                    let price = 0;
+                    let quantity = 0;
+
+                    const divs = row.querySelectorAll('div');
+                    divs.forEach(div => {
+                        const rawText = div.textContent.trim();
+                        if (rawText.startsWith('$')) price = parseFloat(rawText.replace('$', '').trim());
+                        else if (rawText.includes('Qty:')) quantity = parseInt(rawText.replace('Qty:', '').trim(), 10);
+                        else if (!name) name = rawText.split('\n')[0].trim();
+                    });
+
+                    if (!name || isNaN(price) || isNaN(quantity)) return null;
+                    return { good_name: name, quantity: quantity, price_at_order: price };
+                }).filter(Boolean);
+
+                if (orderItemsData.length === 0) {
+                    alert('No valid items found!');
+                    return;
+                }
+
+                try {
+                    // Send order to backend
+                    const response = await fetch('/place_order_table', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            order_number: orderNumber, // keep it here, Flask will ignore it if needed
+                            order_type: orderType,
+                            customer_name: customerName,
+                            table_id: tableId,
+                            order_items: orderItemsData,
+                            order_desc: order_description
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert(`Order placed successfully ✅\nOrder ID: ${data.order_id}`);
+
+                        // Reset UI
+                        orderItems.innerHTML = '';
+                        tempOrderItems = [];
+                        document.querySelector('.billing-row span.amount').textContent = '$0.00';
+                        document.getElementById('taxAmount').textContent = '$0.00';
+                        document.getElementById('totalAmount').textContent = '$0.00';
+
+                        // Fetch new order number
+                        await fetchNewOrderNumber();
+                    } else {
+                        alert('Failed to place order ❌: ' + data.error);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Server error ❌');
+                }
             });
         });
 
-        const drawer = document.getElementById('trackDrawer');
-        const handle = document.getElementById('trackHandle');
-        const symbol = document.getElementById('trackSymbol');
-
-        let open = false;
 
        handle.addEventListener('click', () => {
             open = !open;
@@ -912,7 +926,6 @@
 
         // Fetch a new order number on page load
         fetchNewOrderNumber();
-
 
 
     </script>

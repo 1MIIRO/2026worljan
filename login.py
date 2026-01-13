@@ -8,72 +8,45 @@ import string
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Required for sessions
+# ---------------- ORDER NUMBER LOGIC ----------------
 
-import random
-import string
-import json
-from flask import Flask
-
-# --- ORDER NUMBER MANAGEMENT ---
-ORDER_HISTORY_FILE = "order_history.json"
-
-# Load or initialize order history
-try:
-    with open(ORDER_HISTORY_FILE, "r") as f:
-        order_history = json.load(f)
-except:
-    order_history = {
-        "last_letter_index": 0,  # Current letter index in A-Z
-        "last_letter_repeat": 1, # How many times the letter is repeated
-        "letter_count": 0,       # Count orders for this letter
-        "used_numbers": [],      # Already used 6-digit numbers
-        "current_order_number": ""  # The number currently displayed
-    }
-
-def get_letter_suffix():
+def index_to_suffix(index: int) -> str:
     letters = string.ascii_uppercase
-    idx = order_history["last_letter_index"]
-    repeat = order_history["last_letter_repeat"]
-    letter = letters[idx % 26]
-    return letter * repeat
+    index += 1
+    suffix = ""
 
-def increment_letter_count():
-    order_history["letter_count"] += 1
-    if order_history["letter_count"] >= 10:
-        order_history["letter_count"] = 0
-        order_history["last_letter_index"] += 1
-        if order_history["last_letter_index"] >= 26:
-            order_history["last_letter_index"] = 0
-            order_history["last_letter_repeat"] += 1
+    while index > 0:
+        index -= 1
+        suffix = letters[index % 26] + suffix
+        index //= 26
 
-def generate_unique_number():
+    return suffix
+
+def generate_unique_6_digit(cursor):
     while True:
         number = random.randint(100000, 999999)
-        if number not in order_history["used_numbers"]:
-            order_history["used_numbers"].append(number)
+        cursor.execute("""
+            SELECT 1 FROM orders_improved_table
+            WHERE order_identification_number LIKE %s
+            LIMIT 1
+        """, (f"#{number}%",))
+        if cursor.fetchone() is None:
             return number
 
-def generate_order_number():
-    """Generates a new order number and stores it as the current number"""
-    number = generate_unique_number()
-    suffix = get_letter_suffix()
-    increment_letter_count()
-    full_order_number = f"#{number}{suffix}"
-    
-    # Save as the current displayed order number
-    order_history["current_order_number"] = full_order_number
-    
-    # Save order history to JSON
-    with open(ORDER_HISTORY_FILE, "w") as f:
-        json.dump(order_history, f)
-    
-    return full_order_number
+def generate_next_order_number():
+    conn = get_connection()
+    cursor = conn.cursor()
 
-def get_current_order_number():
-    """Returns the current order number without generating a new one"""
-    if not order_history.get("current_order_number"):
-        return generate_order_number()
-    return order_history["current_order_number"]
+    cursor.execute("SELECT COUNT(*) FROM orders_improved_table")
+    total_orders = cursor.fetchone()[0]
+
+    suffix = index_to_suffix(total_orders // 10)
+    random_number = generate_unique_6_digit(cursor)
+
+    cursor.close()
+    conn.close()
+
+    return f"#{random_number}{suffix}"
 
 # Database connection function
 def get_connection():
@@ -244,9 +217,9 @@ def dashboard():
     tables = cursor.fetchall()
     cursor.close()
     conn.close()
-    current_order_number = get_current_order_number()
+    
     order_description = session.get("order_description", "")
-    return render_template('dashboard.html', user=user_info, products=products,tables=tables,order_categories=order_categories, product_categories=product_categories,product_category_map=product_category_map,order_description=order_description,current_order_number=current_order_number)
+    return render_template('dashboard.html', user=user_info, products=products,tables=tables,order_categories=order_categories, product_categories=product_categories,product_category_map=product_category_map,order_description=order_description)
 
 @app.route('/description', methods=['GET', 'POST'])
 def description_page():
@@ -270,16 +243,8 @@ def activity_billing_queue():
         "job_desc": session.get('job_desc')
     }
 
-    # Fetch all tables for the dropdown
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT Table_db_id,  Table_number FROM tables ORDER BY  Table_number")
-    tables = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
     # Pass the tables to the template
-    return render_template('activity_billing_queue.html', user=user_info, tables=tables)
+    return render_template('activity_billing_queue.html', user=user_info)
 
 @app.route('/activity_Tables')
 def activity_Tables():
@@ -371,11 +336,10 @@ def place_order_table():
     order_items = data.get('order_items')
     order_desc = data.get('order_desc')
 
-    # Use the current displayed order number
-    order_number = get_current_order_number()
+   
 
     # Validate required fields
-    if not order_number or not order_type_val or not customer_name or not table_id or not order_items:
+    if not  order_type_val or not customer_name or not table_id or not order_items:
         return jsonify({"success": False, "error": "Missing required fields"})
 
     user_id = session['user_id']
@@ -391,6 +355,9 @@ def place_order_table():
         items_count = sum(item['quantity'] for item in order_items)
         total_amount = sum(item['quantity'] * item['price_at_order'] for item in order_items)
         order_state = "pending"
+        
+        order_number = generate_next_order_number()
+
 
         cursor.execute("""
             INSERT INTO orders_improved_table (
@@ -418,19 +385,19 @@ def place_order_table():
 
         # Get the primary key of the new order
         order_id = cursor.lastrowid
-
         # 2️⃣ Get order_categories_ID from order_categories table
         cursor.execute("""
             SELECT order_categories_ID 
             FROM order_categories 
             WHERE order_categories_name = %s
-        """, (order_type_val,))
+        """, (order_type_val,))  # <-- make sure order_type_val is the name sent from JS
         category_row = cursor.fetchone()
         if not category_row:
-            raise ValueError("Invalid order category selected")
+            raise ValueError(f"Invalid order category selected: {order_type_val}")
 
         order_categories_ID = category_row['order_categories_ID']
 
+                   
         # 3️⃣ Insert into order_with_categories
         cursor.execute("""
             INSERT INTO order_with_categories (order_ID, order_categories_ID)
@@ -439,16 +406,19 @@ def place_order_table():
 
         # 4️⃣ Insert into customer_order
         cursor.execute("""
-            INSERT INTO customer_order (order_id, customer_name)
-            VALUES (%s, %s)
-        """, (order_id, customer_name))
+            INSERT INTO customer_order (order_ID, customer_name,Table_db_id)
+            VALUES (%s, %s, %s)
+        """, (order_id, customer_name,table_id))
 
-        # 5️⃣ Insert each item into order_items
+
+        order_type_val = data.get('order_type')
+
         for item in order_items:
             good_name = item['good_name']
             quantity = item['quantity']
-            price_at_order = item['price_at_order']
+            price_at_order = item['price_at_order']  # already price * quantity
 
+            # Get product number
             cursor.execute("SELECT good_number FROM products WHERE good_name = %s", (good_name,))
             product_row = cursor.fetchone()
             if not product_row:
@@ -456,24 +426,44 @@ def place_order_table():
 
             good_number = product_row['good_number']
 
+            # Optional: validate category exists
             cursor.execute("""
-                INSERT INTO order_items (order_id, good_number, quantity, price_at_order)
-                VALUES (%s, %s, %s, %s)
-            """, (order_id, good_number, quantity, price_at_order))
+                SELECT order_categories_ID 
+                FROM order_categories 
+                WHERE order_categories_name = %s
+            """, (order_type_val,))
+            category_row = cursor.fetchone()
+            if not category_row:
+                raise ValueError(f"Invalid order category selected: {order_type_val}")
 
+            # Insert into order_detials
+            cursor.execute("""
+                INSERT INTO order_detials 
+                (order_refrence_number, product_purchased, item_quantities, order_detials, Total)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (order_id, good_number, quantity, order_type_val, price_at_order))
+        
         # Commit all inserts
         conn.commit()
         cursor.close()
         conn.close()
 
         # ✅ Generate a new order number for the next order
-        generate_order_number()  # this updates order_history.json
+        # this updates order_history.json
 
-        return jsonify({"success": True, "order_id": order_id, "order_number": order_number})
+        return jsonify({"success": True, "order_id": order_id})
 
     except Exception as e:
         print("Database Error:", e)
         return jsonify({"success": False, "error": str(e)})
+
+@app.route('/get_next_order_number')
+def get_next_order_number_route():
+    try:
+        order_number = generate_next_order_number()
+        return jsonify({"order_number": order_number})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @app.route('/trackhome_orders')
 def trackhome_orders():
@@ -519,6 +509,79 @@ def trackhome_orders():
         orders.append(converted_order)
 
     return jsonify(orders)
+
+from flask import Flask, jsonify, session
+from datetime import datetime, timedelta
+@app.route('/order_display_cards')
+def order_display_cards():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            o.order_ID,
+            co.customer_name,
+            t.Table_number,
+            oc.order_categories_name,
+            o.TIME,
+            p.good_name,
+            od.item_quantities,
+            o.items_count
+        FROM orders_improved_table o
+        LEFT JOIN customer_order co
+            ON o.order_ID = co.order_ID
+        LEFT JOIN tables t
+            ON co.Table_db_id = t.Table_db_id
+        LEFT JOIN order_with_categories owc
+            ON o.order_ID = owc.order_ID
+        LEFT JOIN order_categories oc
+            ON owc.order_categories_ID = oc.order_categories_ID
+        LEFT JOIN order_detials od
+            ON o.order_ID = od.order_refrence_number
+        LEFT JOIN products p
+            ON od.product_purchased = p.good_number
+        ORDER BY o.TIME DESC
+    """)
+
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    orders = {}
+    for row in rows:
+        order_id = row['order_ID']
+
+        # Convert TIME to string if it's datetime or timedelta
+        time_value = row['TIME']
+        if isinstance(time_value, datetime):
+            time_value = time_value.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(time_value, timedelta):
+            total_seconds = int(time_value.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            time_value = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        if order_id not in orders:
+            orders[order_id] = {
+                'order_ID': order_id,
+                'customer_name': row['customer_name'] or "",
+                'table_number': row['Table_number'] or "",
+                'category': row['order_categories_name'] or "",
+                'time': time_value,
+                'items_count': row['items_count'] or 0,
+                'items': []
+            }
+
+        # Add products to items list
+        if row['good_name']:
+            orders[order_id]['items'].append({
+                'good_name': row['good_name'],
+                'quantity': row['item_quantities']
+            })
+
+    return jsonify(list(orders.values()))
+
 
 @app.route('/logout')
 def logout():

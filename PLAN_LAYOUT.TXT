@@ -1,25 +1,41 @@
+SELECT
+    o.order_ID,
+    co.customer_name,
+    t.Table_number,
+    oc.order_categories_name,
+    o.TIME,               -- use the actual column name
+    p.good_name,
+    od.item_quantities,
+    o.items_count
+FROM orders_improved_table o
+LEFT JOIN customer_order co
+    ON o.order_ID = co.order_ID
+LEFT JOIN tables t
+    ON co.Table_db_id = t.Table_db_id
+LEFT JOIN order_with_categories owc
+    ON o.order_ID = owc.order_ID
+LEFT JOIN order_categories oc
+    ON owc.order_categories_ID = oc.order_categories_ID
+LEFT JOIN order_detials od
+    ON o.order_ID = od.order_refrence_number
+LEFT JOIN products p
+    ON od.product_purchased = p.good_number
+ORDER BY o.TIME DESC;
 
 
-order_track_pill display 
-from the table customer_ORDER_STATUS , Tables , order_table , order_type
-+----------------------------------------------+
-| "customer_name"       select pill drop list  |    
-|                                              |
-|table name.order_type    time order was made  |
-|                                              |
-+----------------------------------------------+
 
 
-"customer_name" = customer_ORDER_STATUS.customer_name 
-select pill drop list
-"table name" = join customer_ORDER_STATUS.customer_table and tables. Table_db_id  
-               where  customer_ORDER_STATUS.customer_table = tables. Table_db_id return  tables.Table_number   
-  
-  
-order_type = join customer_ORDER_STATUS.order_db_id and order_table.order_db_id 
-               where  customer_ORDER_STATUS.order_db_id =order_table.order_db_id and if order_tables.order_db_id =order_type.order_db_id 
-              return order_type
 
 
-time order was made = join customer_ORDER_STATUS.order_db_id and order_table.order_db_id 
-                    where  customer_ORDER_STATUS.order_db_id =order_table.order_db_id return order_table.Dateandtime_ordered
+
+
+
+
+
+
+
+
+
+
+
+
