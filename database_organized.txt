@@ -641,7 +641,6 @@ CREATE TABLE orders_improved_table (
     order_ID INT AUTO_INCREMENT PRIMARY KEY,
     order_identification_number INT NOT NULL,
     items_count INT NOT NULL,
-    order_state VARCHAR(50) NOT NULL,
     order_desc TEXT,
     user_id INT NOT NULL,
     Total_ammount DOUBLE NOT NULL,
@@ -662,7 +661,6 @@ CREATE TABLE orders_improved_table (
 | order_ID                    | int         | NO   | PRI | NULL    | auto_increment |
 | order_identification_number | int         | NO   |     | NULL    |                |
 | items_count                 | int         | NO   |     | NULL    |                |
-| order_state                 | varchar(50) | NO   |     | NULL    |                |
 | order_desc                  | text        | YES  |     | NULL    |                |
 | user_id                     | int         | NO   | MUL | NULL    |                |
 | Total_ammount               | double      | NO   |     | NULL    |                |
@@ -708,7 +706,6 @@ CREATE TABLE order_with_categories (
 
 ****************************************************************************
 DROP TABLE IF EXISTS customer_order;
-
 
 
 -- Customer Order table
@@ -792,11 +789,25 @@ CREATE TABLE order_payment_status (
 2 rows in set (0.04 sec)
 
 ************************************************************************************
+order_with_state
 
+CREATE TABLE order_with_state (
+    order_ID INT NOT NULL,
+    order_status_id INT NOT NULL,
+    LAST_UPDATE DATETIME NOT NULL, 
+	  
+    FOREIGN KEY (order_ID)
+        REFERENCES orders_improved_table(order_ID)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
 
+    FOREIGN KEY (order_status_id)
+        REFERENCES order_status(order_status_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
-
-
+**********************************************************************************************
 
 
 SELECT
@@ -876,16 +887,18 @@ CREATE TABLE order_tax_discount (
 
 
 ***********************************************************************
+ALTER TABLE orders_improved_table
+MODIFY COLUMN order_identification_number VARCHAR(255);
 
 
-
-
-
-
-
-
-
-
+Customa1
+Customa2
+Customa3
+Customa4
+Customa5
+Customa6
+Customa7
+Customa8
 
 
 

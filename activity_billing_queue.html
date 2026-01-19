@@ -27,103 +27,20 @@
     </div>
 
     <!-- ORDER PANEL -->
-    <div id="orderContainer" class="order-container">
-        <div class="order-top-bar" style="display:flex; align-items:center; gap:10px;">
-            <!-- Left notepad button -->
-            <button class="btn btn-light btn-sm">
-                <img src="{{ url_for('static', filename='images/nootpad_icon.jpg') }}" style="width:16px;">
-            </button>
-
-            <!-- Editable texts in the middle -->
-            <div class="order-texts" style="display:flex; flex-direction:column; flex:1; gap:2px;">
-                <div id="customerName" contenteditable="false" class="editable-text">Customer Name</div>
-                <div id="orderNumber" contenteditable="false" class="editable-text">Order Number</div>
-            </div>
-            
-            <!-- Right pencil button -->
-            <button id="editPencil" class="btn btn-light btn-sm">
-                <img src="{{ url_for('static', filename='images/pencil_icon.jpg') }}" style="width:16px;">
-            </button>
+   <div id="orderContainer" class="order-container">
+        <!-- Top Title -->
+        <div class="order-top-bar">
+            <h1 class="order-panel-title">Order Billing Queue</h1>
         </div>
 
-        <div class="order-dropdowns p-2">
-            <div class="dropdown">
-                <button class="dropdown-btn">Select Table ▼</button>
-                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 200px; overflow-y: auto;">
-                    {% for table in tables %}
-                        <div class="dropdown-item" data-id="{{ table.Table_db_id }}" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
-                            <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                            Table {{ table.Table_number }}
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="dropdown">
-                <button class="dropdown-btn" data-default-text="Order Type">Order Type ▼</button>
-                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000;">
-                    <div class="dropdown-item" data-id="dine_in" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
-                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                        Dine_in
-                    </div>
-                    <div class="dropdown-item" data-id="takeaway" style="padding: 5px 10px; cursor: pointer; display:flex; align-items:center; gap:8px;">
-                        <span class="dot" style="width:8px; height:8px; border-radius:50%; background:transparent; display:inline-block;"></span>
-                        Takeaway
-                    </div>
+        <!-- Display screen for expandable cards -->
+        <div class="billing-panel-cards-display">
+            <div class="billing-panel-cards-wrapper">
+                <div id="order-rectangle-screen" class="rectangle-cards-wrapper">
+                     <!-- Rectangular order cards will be dynamically added here -->
                 </div>
             </div>
         </div>
-
-        <div class="order-display-screens" style="display:flex; flex-direction:column; gap:10px; margin-top:0px;">
-            <!-- Display Screen 1 (twice as big) -->
-            <div class="display-screen display-screen-1">
-                <p>-------------</p>
-            </div>
-
-            <!-- Display Screen 2 -->
-            <div class="display-screen display-screen-2">
-                <div class="billing-summary">
-                    
-                    <div class="billing-row">
-                        <span>Subtotal</span>
-                        <span class="amount">$</span>
-                    </div>
-
-                    <div class="billing-row">
-                        <span>Tax (10%)</span>
-                        <span class="amount">$</span>
-                    </div>
-
-                    <div class="billing-row">
-                        <span>Discount</span>
-                        <span class="amount">$</span>
-                    </div>
-
-                    <div class="billing-separator"></div>
-
-                    <div class="billing-row total">
-                        <span>TOTAL</span>
-                        <span class="amount">$</span>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-        
-        <div class="order-button-container">
-
-            <!-- TOP ROW -->
-            <div class="button-top">
-                <button class="pill-btn_order">Promo-code</button>
-                <button class="pill-btn_order">QRS</button>
-            </div>
-
-            <!-- BOTTOM ROW -->
-            <div class="button-bottom">
-                <button class="big-action-btn">PLACE ORDER</button>
-            </div>
-
-        </div>
-
     </div>
 
     <!-- TOP BAR -->
@@ -176,32 +93,25 @@
                         <a href="{{ url_for('activity_Order_history') }}">Order History</a>
                     </div>
                 </div>
-                <div class="col-9">
-                    <div class="activity-display-screen">
-                        <p class="activity-display-text">
-                            Billing queue items will appear here…
-                        </p>
-                    </div>
+                <div class="col-9 d-flex flex-column gap-3">
+
+    <!-- Display screen -->
+                <div class="activity-display-screen">
+                    <p class="activity-display-text">
+                        Billing queue items will appear here…
+                    </p>
                 </div>
+
+                <!-- Order cards (permanent) -->
+                <div id="orderCardsContent" class="order-cards-grid">
+                    <!-- Order cards will be appended here -->
+                </div>
+
+            </div>
             </div>
         </div>
 
     </div>
-
-
-        <!-- ORDER DISPLAY CARDS -->
-    <div id="orderCardsDrawer">
-        <div id="orderCardsHandle" class="track-handle">
-            <span id="orderCardsSymbol">+</span>
-            <span class="track-text">Recent Orders</span>
-        </div>
-
-        <div id="orderCardsContent" class="track-scroll">
-            <!-- Order cards will be appended here -->
-        </div>
-    </div>
-
-
 
     <!-- SCRIPT -->
     <script>
@@ -382,7 +292,7 @@
             });
         });
 
-    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
     const content = document.getElementById('orderCardsContent');
 
     async function fetchOrderCards() {
@@ -412,38 +322,49 @@
                 `;
                 card.appendChild(header);
 
-                // Items
+                            // Items
                 const itemsContainer = document.createElement('div');
                 itemsContainer.className = 'items-container';
 
                 order.items.forEach((item, index) => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'item-row';
-                    itemDiv.textContent = `${item.quantity} x ${item.good_name}`;
-                    if (index >= 3) itemDiv.style.display = 'none'; // hide extra
+                    itemDiv.textContent = `${item.quantity} × ${item.good_name}`;
+
+                    if (index >= 3) itemDiv.style.display = 'none';
                     itemsContainer.appendChild(itemDiv);
                 });
 
-                // See more button
+                card.appendChild(itemsContainer);
+
+                // See more / See less toggle
                 if (order.items.length > 3) {
-                    const seeMore = document.createElement('button');
-                    seeMore.textContent = 'See more';
-                    seeMore.className = 'see-more-btn';
-                    seeMore.addEventListener('click', () => {
-                        const hiddenItems = itemsContainer.querySelectorAll('.item-row[style*="display: none"]');
-                        hiddenItems.forEach(i => i.style.display = 'block');
-                        seeMore.style.display = 'none';
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'see-more-btn';
+                    toggleBtn.textContent = 'See more';
+
+                    let expanded = false;
+
+                    toggleBtn.addEventListener('click', () => {
+                        expanded = !expanded;
+
+                        itemsContainer.querySelectorAll('.item-row').forEach((row, idx) => {
+                            row.style.display = expanded || idx < 3 ? 'block' : 'none';
+                        });
+
+                        toggleBtn.textContent = expanded ? 'See less' : 'See more';
                     });
-                    card.appendChild(seeMore);
+
+                    card.appendChild(toggleBtn);
                 }
 
-                card.appendChild(itemsContainer);
 
                 // Footer: total items
                 const footer = document.createElement('div');
                 footer.className = 'order-footer';
                 footer.innerHTML = `
-                    <strong>Total Items:</strong> ${order.items_count}
+                    <span>Total Items</span>
+                    <span class="total-items-value">${order.items_count}</span>
                 `;
                 card.appendChild(footer);
 
@@ -459,9 +380,105 @@
     setInterval(fetchOrderCards, 10000);
 });
 
+       document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('order-rectangle-screen');
+
+            async function loadTodayOrders() {
+                try {
+                    const res = await fetch('/get_today_orders_display'); // Flask route
+                    let orders = await res.json();
+
+                    // Filter out any orders missing critical data
+                    orders = orders.filter(order =>
+                        order.order_identification_number &&
+                        order.customer_name &&
+                        order.TIME
+                    );
+
+                    // Record currently expanded rectangles by order ID
+                    const expandedOrders = new Set();
+                    container.querySelectorAll('.order-rectangle.expanded').forEach(rect => {
+                        if (rect.dataset.orderId) expandedOrders.add(rect.dataset.orderId);
+                    });
+
+                    // Clear container
+                    container.innerHTML = '';
+
+                    // Create rectangles
+                    orders.forEach(order => {
+                        const rect = document.createElement('div');
+                        rect.className = 'order-rectangle collapsed';
+                        rect.dataset.orderId = order.order_identification_number; // track by order ID
+
+                        rect.innerHTML = `
+                            <div class="rect-line-1"><b>${order.order_identification_number}</b></div>
+                            <div class="rect-line-2"><b>${order.customer_name}</b></div>
+                            <div class="rect-line-3"><b>${order.TIME}</b></div>
+
+                            <div class="rect-extra">
+                                <div><b>Items: ${order.items_count || 0}</b></div>
+                                <div><b>Total: ${order.Total_ammount || 0}</b></div>
+                                <div><b>Category: ${order.order_categories_name || ""}</b></div>
+                                <div><b>Status: ${order.order_status || ""}</b></div>
+                                <div><b>Status Update: ${order.order_state_last_update || ""}</b></div>
+                                <div><b>Order Update: ${order.order_last_update || ""}</b></div>
+                                <button class="rect-save-btn"><b>Save</b></button>
+                                <button class="rect-collapse-btn"><b>Collapse</b></button>
+                            </div>
+                        `;
+
+                        const extraContent = rect.querySelector('.rect-extra');
+                        const collapseBtn = rect.querySelector('.rect-collapse-btn');
+
+                        // Hide extra content by default
+                        extraContent.style.display = 'none';
+                        collapseBtn.style.display = 'none';
+
+                        // Restore expanded state if previously expanded
+                        if (expandedOrders.has(order.order_identification_number)) {
+                            rect.classList.add('expanded');
+                            rect.classList.remove('collapsed');
+                            extraContent.style.display = 'block';
+                            collapseBtn.style.display = 'block';
+                        }
+
+                        // Expand rectangle on click (only expands, doesn't collapse)
+                        rect.addEventListener('click', () => {
+                            if (!rect.classList.contains('expanded')) {
+                                rect.classList.add('expanded');
+                                rect.classList.remove('collapsed');
+                                extraContent.style.display = 'block';
+                                collapseBtn.style.display = 'block';
+                            }
+                        });
+
+                        // Collapse rectangle on collapse button click
+                        collapseBtn.addEventListener('click', (e) => {
+                            e.stopPropagation(); // prevent triggering rectangle click
+                            rect.classList.remove('expanded');
+                            rect.classList.add('collapsed');
+                            extraContent.style.display = 'none';
+                            collapseBtn.style.display = 'none';
+                        });
+
+                        container.appendChild(rect);
+                    });
+
+                } catch (err) {
+                    console.error('Failed to load today orders:', err);
+                    container.innerHTML = '<div style="color:red;"><b>Failed to load orders</b></div>';
+                }
+            }
+
+            // Initial load
+            loadTodayOrders();
+
+            // Refresh every 10 seconds
+            setInterval(loadTodayOrders, 10000);
+        });
 
 
-    </script>
+</script>
 
 </body>
 </html>

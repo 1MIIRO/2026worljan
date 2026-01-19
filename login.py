@@ -354,7 +354,6 @@ def place_order_table():
         # 1️⃣ Insert into orders_improved_table
         items_count = sum(item['quantity'] for item in order_items)
         total_amount = sum(item['quantity'] * item['price_at_order'] for item in order_items)
-        order_state = "pending"
         
         order_number = generate_next_order_number()
 
@@ -363,18 +362,16 @@ def place_order_table():
             INSERT INTO orders_improved_table (
                 order_identification_number,
                 items_count,
-                order_state,
                 order_desc,
                 user_id,
                 Total_ammount,
                 DATE,
                 TIME,
                 LAST_UPDATE
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             order_number,
             items_count,
-            order_state,
             order_desc,
             user_id,
             total_amount,
@@ -404,7 +401,7 @@ def place_order_table():
             VALUES (%s, %s)
         """, (order_id, order_categories_ID))
 
-        # 4️⃣ Insert into customer_order
+         # 4️⃣ Insert into customer_order
         cursor.execute("""
             INSERT INTO customer_order (order_ID, customer_name,Table_db_id)
             VALUES (%s, %s, %s)
@@ -442,6 +439,12 @@ def place_order_table():
                 (order_refrence_number, product_purchased, item_quantities, order_detials, Total)
                 VALUES (%s, %s, %s, %s, %s)
             """, (order_id, good_number, quantity, order_type_val, price_at_order))
+            
+        cursor.execute("""
+            INSERT INTO order_with_state 
+            (order_ID, order_status_id, LAST_UPDATE)
+            VALUES (%s, %s, %s)
+            """, (order_id, 1, now))
         
         # Commit all inserts
         conn.commit()
@@ -456,6 +459,66 @@ def place_order_table():
     except Exception as e:
         print("Database Error:", e)
         return jsonify({"success": False, "error": str(e)})
+
+from flask import jsonify
+from datetime import datetime, timedelta
+@app.route('/get_today_orders_display', methods=['GET'])
+def get_today_orders_display():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            o.order_ID,
+            o.order_identification_number,
+            c.customer_name,
+            o.TIME,
+            o.items_count,
+            o.Total_ammount,
+            o.LAST_UPDATE AS order_last_update,
+            (SELECT GROUP_CONCAT(oc.order_categories_name)
+             FROM order_with_categories owc
+             JOIN order_categories oc 
+               ON owc.order_categories_ID = oc.order_categories_ID
+             WHERE owc.order_ID = o.order_ID
+            ) AS order_categories_name,
+            (SELECT os.order_status
+             FROM order_with_state ow
+             JOIN order_status os 
+               ON ow.order_status_id = os.order_status_id
+             WHERE ow.order_ID = o.order_ID
+             ORDER BY ow.LAST_UPDATE DESC
+             LIMIT 1
+            ) AS order_status,
+            (SELECT ow.LAST_UPDATE
+             FROM order_with_state ow
+             WHERE ow.order_ID = o.order_ID
+             ORDER BY ow.LAST_UPDATE DESC
+             LIMIT 1
+            ) AS order_state_last_update
+        FROM orders_improved_table o
+        JOIN customer_order c 
+          ON o.order_ID = c.order_ID
+        WHERE DATE(o.DATE) = CURDATE()
+        ORDER BY o.TIME ASC
+    """)
+
+    orders = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Ensure TIME is string
+    for row in orders:
+        if isinstance(row['TIME'], datetime):
+            row['TIME'] = row['TIME'].strftime("%H:%M:%S")
+        elif isinstance(row['TIME'], timedelta):
+            total_seconds = int(row['TIME'].total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            row['TIME'] = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+    return jsonify(orders)
 
 @app.route('/get_next_order_number')
 def get_next_order_number_route():
@@ -581,7 +644,6 @@ def order_display_cards():
             })
 
     return jsonify(list(orders.values()))
-
 
 @app.route('/logout')
 def logout():

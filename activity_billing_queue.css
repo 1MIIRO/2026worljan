@@ -86,54 +86,20 @@ body {
     position: relative; /* needed for absolute centering of middle */
 }
 
-/* Middle editable texts */
-.order-top-bar .order-texts {
-    position: absolute;  /* center independently of buttons */
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%); /* perfectly center horizontally & vertically */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
+.order-top-bar {
+    background-color: #0d6efd; /* Blue background */
+    text-align: center;
+    padding: 20px 0;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
 
-/* Customer Name */
-.order-top-bar .order-texts #customerName {
-    font-weight: bold;
-    color: #050505;
-    font-size: 18px;
-}
-
-/* Order Number */
-.order-top-bar .order-texts #orderNumber {
-    font-weight: 400;
-    color: #6c757d;
-    font-size: 10px;
-}
-
-/* DROPDOWNS */
-.order-dropdowns {
-    display: flex;
-    gap: 5px;
-}
-.order-dropdowns .dropdown { flex: 1; }
-.dropdown-btn {
-    width: 100%;
-    padding: 8px;
-    background: #5178c5;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: left;
-}
-.dropdown-content {
-    background: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-top: 5px;
-    padding: 5px;
+.order-panel-title {
+    margin: 0;
+    color: white;       /* White text on blue */
+    font-size: 28px;    /* Large text */
+    font-weight: bold;  /* Bold */
+    font-family: 'Segoe UI', sans-serif;
 }
 
 /* MAIN SHIFT */
@@ -244,181 +210,426 @@ body {
     border-radius: 6px;
 }
 
-/* Parent container uses flex column */
-.order-display-screens {
+
+/* =============================== */
+/* ORDER CARDS – HORIZONTAL SCROLL */
+/* =============================== */
+
+/* Container holding all order cards */
+#orderCardsContent {
+    display: flex;
+    flex-direction: row;          /* 🔑 horizontal layout */
+    flex-wrap: nowrap;            /* no wrapping */
+
+    gap: 14px;
+    padding: 14px;
+
+    overflow-x: auto;             /* horizontal scroll */
+    overflow-y: hidden;
+
+    background-color: #edeff0;
+    border-radius: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+
+    scroll-behavior: smooth;
+    white-space: nowrap;
+}
+
+/* Individual order card */
+.order-card {
+    flex: 0 0 260px;              /* fixed width cards */
+    min-width: 260px;
+    max-width: 260px;
+
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 12px;
+
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+
     display: flex;
     flex-direction: column;
-    gap: 10px; /* space between screens */
-    height: calc(100% - 150px); /* optional: give total height minus space for buttons */
+    gap: 6px;
+
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Display Screen 1: larger */
-.display-screen-1 {
-    flex: 3.24;          /* increased from 2.4 → bigger portion */
-    min-height: 300px; 
-    overflow-y: auto;
+/* Hover effect */
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
-/* Display Screen 2: smaller, pushed down */
-.display-screen-2 {
-    flex: 1.5;          /* decreased from 1.2 → smaller portion */
-    min-height: 100px; 
+/* Header section */
+.order-header {
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
 }
 
-/* Custom scrollbar for Webkit browsers (Chrome, Edge, Safari) */
-.display-screen-1::-webkit-scrollbar {
-    width: 8px;
+/* Items list */
+.items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.display-screen-1::-webkit-scrollbar-track {
-    background: #f1f1f1; 
-    border-radius: 4px;
+/* Item row */
+.item-row {
+    font-size: 13px;
+    color: #333;
 }
 
-.display-screen-1::-webkit-scrollbar-thumb {
-    background-color: #4da6ff; /* light blue */
-    border-radius: 4px;
-    border: 2px solid #f1f1f1; /* adds spacing around thumb */
+/* See more button */
+.see-more-btn {
+    align-self: flex-start;
+    background: transparent;
+    color: #0d6efd;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0;
+    cursor: pointer;
 }
 
-.billing-summary {
+.see-more-btn:hover {
+    text-decoration: underline;
+}
+
+/* Footer */
+/* Horizontal scrollbar styling */
+#orderCardsContent::-webkit-scrollbar {
+    height: 10px;
+}
+
+#orderCardsContent::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+#orderCardsContent::-webkit-scrollbar-thumb {
+    background-color: #4da6ff;
+    border-radius: 5px;
+    border: 2px solid #f1f1f1;
+}
+
+/* Footer layout: label left, value right */
+.order-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;   /* 🔑 pushes value to the end */
+    align-items: center;
+
+    border-top: 1px dashed #ccc;
+    padding-top: 6px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* Total items value in red */
+.total-items-value {
+    color: red;
+    font-weight: bold;
+}
+
+/* ============================ */
+/* ORDER PANEL                   */
+/* ============================ */
+/* Display screen for vertical cards */
+#orderContainer .billing-panel-cards-display {
+    width: 100%;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 10px;
+
+    display: flex;
+    flex-direction: column;  /* vertical stacking */
+    gap: 16px;
+
+    max-height: 600px;       /* optional, limits total height */
+    overflow-y: auto;        /* vertical scroll if many cards */
+}
+
+/* Card wrapper */
+#orderContainer .billing-panel-cards-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Individual card */
+#orderContainer .billing-panel-card {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     display: flex;
     flex-direction: column;
     gap: 8px;
-    font-family: monospace;   /* 🔑 ensures even spacing */
+    cursor: pointer;
+
+    min-height: calc(1.2em * 3 + 16px); /* height for 3 lines + padding */
+    overflow: hidden;
+    transition: min-height 0.3s ease, background-color 0.3s ease;
 }
 
-/* Receipt rows */
-.billing-row {
-    display: grid;
-    grid-template-columns: 1fr 120px; /* forces space before $ */
-    align-items: center;
+/* Hover effect */
+#orderContainer .billing-panel-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
-/* Dollar column */
-.billing-row .amount {
-    text-align: left; /* space remains after $ */
+/* Lines inside card */
+#orderContainer .billing-panel-card .line {
+    font-size: 14px;
+    color: #333;
 }
 
-/* Dotted separator */
-.billing-separator {
-    width: 100%;
-    border-top: 2px dotted #000;
-    margin: 6px 0;
+/* Hide lines beyond 3 before click */
+#orderContainer .billing-panel-card .line:nth-child(n+4) {
+    display: none;
 }
 
-/* TOTAL emphasis */
-.billing-row.total {
-    font-weight: bold;
+/* Expanded card */
+#orderContainer .billing-panel-card.expanded {
+    min-height: calc(1.2em * 9 + 16px); /* height for 9 lines + padding */
+    background-color: #e0f0ff;
 }
-.order-button-container {
+
+/* Show all lines when expanded */
+#orderContainer .billing-panel-card.expanded .line {
+    display: block;
+}
+
+#orderDisplayScreen {
+    margin-top: 10px;
+    padding: 0;
+    overflow-y: auto;
+    height: calc(100% - 80px); /* header height adjustment */
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    width: 100%;
-    margin-top: auto; /* pushes buttons to bottom of the container */
+    gap: 8px; /* smaller gap for compact cards */
 }
 
-/* TOP ROW */
-.button-top {
-    display: flex;
-    gap: 0; /* remove gap to prevent width overflow */
-    width: 100%;
+.order-card p {
+    margin: 3px 0;
 }
 
-/* Pill buttons - top row */
-.pill-btn_order {
-    box-sizing: border-box; /* includes padding & border in width */
-    width: calc(50% - 2px); /* split evenly minus small margin */
-    padding: 6px 0;  
-    border-radius: 999px;
-    border: 1px solid #00025d;
-    background: #f8f9fa;
-    font-size: 13px;
-    cursor: pointer;
-    color:#1a2228
+.extra-content p {
+    margin: 3px 0;
 }
 
-.pill-btn_order:hover { border-color: #165030; color: #165030; }
-
-.pill-btn_order:first-child {
-    margin-right: 4px;
-}
-
-.pill-btn_order:last-child {
-    margin-left: 4px;
-}
-
-.button-bottom {
-    width: 100%;
-}
-
-/* BIG BUTTON */
-.big-action-btn {
-    box-sizing: border-box; /* include padding & border in width */
-    width: 100%;
-    padding: 8px 0;
-    background: #0d6efd;
-    color: #fff;
+.save-btn {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background-color: #0d6efd;
+    color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.save-btn:hover {
+    background-color: #0b5ed7;
+}
+
+/* ================================ */
+/* RECTANGULAR ORDER DISPLAY SCREEN */
+/* ================================ */
+
+.order-rectangle-screen {
+    flex: 1;
+    overflow-y: auto;
+    background: #edeff0;
+}
+
+/* COLLAPSED = EXACTLY 3 LINES */
+.order-rectangle.collapsed {
+    height: 78px; /* 3 text lines */
+}
+
+/* TEXT STYLES */
+.rect-line-1 {
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.rect-line-2 {
     font-size: 14px;
-    font-weight: 600;
+    color: #333;
+}
+
+.rect-line-3 {
+    font-size: 13px;
+    color: #666;
+}
+
+/* EXTRA DETAILS (HIDDEN BY DEFAULT) */
+.rect-extra {
+    margin-top: 8px;
+    font-size: 13px;
+    display: none;
+}
+
+/* SAVE BUTTON */
+.rect-save-btn {
+    margin-top: 8px;
+    padding: 6px;
+    width: 100%;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 6px;
     cursor: pointer;
 }
 
 
-#orderCardsContent {
+.rectangle-cards-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px;
+}
+
+.order-rectangle {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f2f8ff;
+    overflow: hidden;
+    max-height: 60px; /* collapsed height */
+}
+
+.order-rectangle.expanded {
+    max-height: 500px; /* expanded height */
+}
+
+
+.rect-line-1, .rect-line-2, .rect-line-3,
+.rect-extra div {
+    font-weight: bold;  /* reinforce bold */
+    color: #000;        /* ensure visible */
+}
+
+.order-rectangle {
+    padding: 12px 14px;     /* keeps some spacing */
+    font-size: 15px;
+    line-height: 1.4em;     /* ensures proper spacing between lines */
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background-color: #f2f8ff;
+}
+
+.order-rectangle.collapsed {
+    max-height: calc(3 * 1.4em + 24px); /* 3 lines + padding */
+}
+
+.order-rectangle.expanded {
+    max-height: 550px;
+    background-color: #f8f9fa;
+}
+
+.rect-extra {
+    display: none;
+}
+
+
+/* ================================ */
+/* RECTANGULAR ORDER DISPLAY SCREEN */
+/* ================================ */
+
+.order-rectangle-screen {
+    flex: 1;
+    overflow-y: auto;
+    background: #edeff0;
+    padding: 10px;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.order-card {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 10px;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
+/* RECTANGLE CARD */
 
-.order-header {
-    margin-bottom: 8px;
-}
 
-.items-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-bottom: 8px;
-}
-
-.item-row {
+/* LINES BEFORE CLICK */
+.rect-line-1,
+.rect-line-2,
+.rect-line-3 {
+    font-weight: bold;
     font-size: 14px;
-    color: #333;
+    margin: 2px 0;
 }
 
-.see-more-btn {
-    background: #007bff;
+/* EXTRA DETAILS (HIDDEN BY DEFAULT) */
+.rect-extra {
+    margin-top: 8px;
+    display: none;
+    font-weight: bold;
+    font-size: 13px;
+    
+}
+
+/* SAVE BUTTON */
+.rect-save-btn {
+    margin-top: 8px;
+    padding: 6px 10px;
+    width: 100%;
+    background: #0d6efd;
     color: white;
     border: none;
-    padding: 4px 8px;
+    border-radius: 6px;
     cursor: pointer;
-    border-radius: 4px;
-    margin-bottom: 4px;
-}
-
-.order-footer {
-    border-top: 1px solid #eee;
-    padding-top: 6px;
     font-weight: bold;
+    transition: background 0.2s ease;
+}
+
+.rect-save-btn:hover {
+    background-color: #0b5ed7;
+}
+
+/* Hide extra content and collapse button when collapsed */
+.order-rectangle.collapsed .rect-extra {
+    display: none;
+}
+
+/* Show extra content and collapse button when expanded */
+.order-rectangle.expanded .rect-extra {
+    display: block;
 }
 
 
+/* Collapse button */
+.rect-collapse-btn {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
 
+.rect-collapse-btn:hover {
+    background-color: #ff4c4c;
+}
 
-
-
+/* Optional: smooth expand/collapse animation */
+.order-rectangle {
+    transition: max-height 0.4s ease, padding 0.3s ease;
+}
 
 
 
