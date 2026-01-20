@@ -573,8 +573,21 @@ def trackhome_orders():
 
     return jsonify(orders)
 
+@app.route('/get_all_order_status')
+def get_all_order_status():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)  # dictionary so keys are column names
+    cursor.execute("SELECT order_status_id, order_status FROM order_status")
+    statuses = cursor.fetchall()  # This is a list of dicts: [{'order_status_id':1,'order_status':'Pending'}, ...]
+    cursor.close()
+    conn.close()
+    return jsonify(statuses)
+
 from flask import Flask, jsonify, session
 from datetime import datetime, timedelta
+from flask import jsonify
+from datetime import datetime, timedelta
+
 @app.route('/order_display_cards')
 def order_display_cards():
     conn = get_connection()
@@ -589,20 +602,33 @@ def order_display_cards():
             o.TIME,
             p.good_name,
             od.item_quantities,
-            o.items_count
+            o.items_count,
+
+            (
+                SELECT os.order_status
+                FROM order_with_state ow
+                JOIN order_status os
+                  ON ow.order_status_id = os.order_status_id
+                WHERE ow.order_ID = o.order_ID
+                ORDER BY ow.LAST_UPDATE DESC
+                LIMIT 1
+            ) AS order_status,
+
+            (
+                SELECT ow.LAST_UPDATE
+                FROM order_with_state ow
+                WHERE ow.order_ID = o.order_ID
+                ORDER BY ow.LAST_UPDATE DESC
+                LIMIT 1
+            ) AS order_status_time
+
         FROM orders_improved_table o
-        LEFT JOIN customer_order co
-            ON o.order_ID = co.order_ID
-        LEFT JOIN tables t
-            ON co.Table_db_id = t.Table_db_id
-        LEFT JOIN order_with_categories owc
-            ON o.order_ID = owc.order_ID
-        LEFT JOIN order_categories oc
-            ON owc.order_categories_ID = oc.order_categories_ID
-        LEFT JOIN order_detials od
-            ON o.order_ID = od.order_refrence_number
-        LEFT JOIN products p
-            ON od.product_purchased = p.good_number
+        LEFT JOIN customer_order co ON o.order_ID = co.order_ID
+        LEFT JOIN tables t ON co.Table_db_id = t.Table_db_id
+        LEFT JOIN order_with_categories owc ON o.order_ID = owc.order_ID
+        LEFT JOIN order_categories oc ON owc.order_categories_ID = oc.order_categories_ID
+        LEFT JOIN order_detials od ON o.order_ID = od.order_refrence_number
+        LEFT JOIN products p ON od.product_purchased = p.good_number
         ORDER BY o.TIME DESC
     """)
 
@@ -611,19 +637,17 @@ def order_display_cards():
     conn.close()
 
     orders = {}
+
     for row in rows:
         order_id = row['order_ID']
 
-        # Convert TIME to string if it's datetime or timedelta
+        # TIME conversion
         time_value = row['TIME']
         if isinstance(time_value, datetime):
-            time_value = time_value.strftime("%Y-%m-%d %H:%M:%S")
+            time_value = time_value.strftime("%H:%M:%S")
         elif isinstance(time_value, timedelta):
-            total_seconds = int(time_value.total_seconds())
-            hours = total_seconds // 3600
-            minutes = (total_seconds % 3600) // 60
-            seconds = total_seconds % 60
-            time_value = f"{hours:02}:{minutes:02}:{seconds:02}"
+            total = int(time_value.total_seconds())
+            time_value = f"{total//3600:02}:{(total%3600)//60:02}:{total%60:02}"
 
         if order_id not in orders:
             orders[order_id] = {
@@ -633,10 +657,14 @@ def order_display_cards():
                 'category': row['order_categories_name'] or "",
                 'time': time_value,
                 'items_count': row['items_count'] or 0,
+                'order_status': row['order_status'] or "pending",
+                'order_status_time': (
+                    row['order_status_time'].strftime("%Y-%m-%d %H:%M:%S")
+                    if row['order_status_time'] else ""
+                ),
                 'items': []
             }
 
-        # Add products to items list
         if row['good_name']:
             orders[order_id]['items'].append({
                 'good_name': row['good_name'],
@@ -644,6 +672,113 @@ def order_display_cards():
             })
 
     return jsonify(list(orders.values()))
+
+from flask import jsonify
+from datetime import datetime
+
+@app.route('/billing_queue_display')
+def billing_queue_display():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            o.order_ID,
+            o.order_identification_number,
+            o.Total_ammount,
+            o.DATE,
+            co.customer_name,
+            t.Table_number,
+
+            (
+                SELECT os.order_status
+                FROM order_with_state ow
+                JOIN order_status os
+                  ON ow.order_status_id = os.order_status_id
+                WHERE ow.order_ID = o.order_ID
+                ORDER BY ow.LAST_UPDATE DESC
+                LIMIT 1
+            ) AS latest_status,
+
+            (
+                SELECT ow.LAST_UPDATE
+                FROM order_with_state ow
+                WHERE ow.order_ID = o.order_ID
+                ORDER BY ow.LAST_UPDATE DESC
+                LIMIT 1
+            ) AS status_time
+
+        FROM orders_improved_table o
+        LEFT JOIN customer_order co
+            ON o.order_ID = co.order_ID
+        LEFT JOIN tables t
+            ON co.Table_db_id = t.Table_db_id
+        ORDER BY o.DATE DESC
+    """)
+
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    for row in rows:
+        # format date
+        if isinstance(row['DATE'], datetime):
+            row['DATE'] = row['DATE'].strftime("%Y-%m-%d %H:%M:%S")
+
+        # pill logic
+        if row['latest_status'] in ('pending', 'in_progress'):
+            row['pill_text'] = 'ACTIVE'
+            row['pill_class'] = 'pill-active'
+        else:
+            row['pill_text'] = 'CLOSED'
+            row['pill_class'] = 'pill-closed'
+
+    return jsonify(rows)
+
+@app.route('/update_order_status', methods=['POST'])
+def update_order_status():
+    data = request.json
+    order_ident_number = data.get('order_identification_number')
+    new_status_id = data.get('order_status_id')
+
+    if not order_ident_number or not new_status_id:
+        return jsonify({'success': False, 'message': 'Missing order_identification_number or order_status_id'}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Get order_ID from orders_improved_table
+    cursor.execute("""
+        SELECT order_ID FROM orders_improved_table
+        WHERE order_identification_number = %s
+    """, (order_ident_number,))
+    result = cursor.fetchone()
+
+    if not result:
+        cursor.close()
+        conn.close()
+        return jsonify({'success': False, 'message': 'Order not found'}), 404
+
+    order_id = result[0]
+
+    # Insert new status into order_with_state
+    cursor.execute("""
+        INSERT INTO order_with_state (order_ID, order_status_id, LAST_UPDATE)
+        VALUES (%s, %s, %s)
+    """, (order_id, new_status_id, datetime.now()))
+
+    # Update orders_improved_table.LAST_UPDATE
+    cursor.execute("""
+        UPDATE orders_improved_table
+        SET LAST_UPDATE = %s
+        WHERE order_ID = %s
+    """, (datetime.now(), order_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'success': True})
 
 @app.route('/logout')
 def logout():

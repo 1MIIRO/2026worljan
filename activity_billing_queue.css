@@ -631,5 +631,102 @@ body {
     transition: max-height 0.4s ease, padding 0.3s ease;
 }
 
+/* =========================
+   STATUS PILL (DB STATES)
+========================= */
+.status-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-transform: capitalize;
+}
 
+/* === DB STATUS COLORS === */
 
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-in_progress {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.status-complete {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Fallback (safety only) */
+.status-unknown {
+    background-color: #e0e0e0;
+    color: #555;
+}
+.activity-display-screen {
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+
+    /* Keep original size but scroll if content overflows */
+    max-height: 400px;     /* Adjust this to match your original design */
+    overflow-y: auto;      /* Vertical scrolling */
+    overflow-x: hidden;    /* Prevent horizontal scroll */
+}
+
+.queue-row {
+    font-size: 14px;
+}
+
+.queue-top {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
+.queue-middle {
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.queue-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.order-date {
+    font-size: 12px;
+    color: #666;
+}
+.status-pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.pill-active {
+    background-color: #ff4d4d;
+    color: white;
+}
+
+.pill-closed {
+    background-color: #28a745;
+    color: white;
+}
+
+.queue-divider {
+    margin: 10px 0;
+    border: none;
+    border-bottom: 1px solid #ddd;
+}
