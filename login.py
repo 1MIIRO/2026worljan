@@ -53,7 +53,7 @@ def get_connection():
     return mysql.connector.connect(
         host='localhost',
         user='root',
-        password='1234',
+        password='',
         database='bakery_busness'
     )
 
@@ -142,7 +142,7 @@ def login():
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM `user` WHERE user_name=%s AND user_password=%s", (username, password))
+    cursor.execute("SELECT * FROM `users` WHERE user_name=%s AND user_password=%s", (username, password))
     user = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -260,47 +260,34 @@ def activity_Tables():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
+    # Get all tables and their floor info
     query = """
-        SELECT 
-            t.Table_db_id,
-            t.Table_number,
-            tf.floor_name AS table_floor,
-
-            COALESCE(tr.table_status, 'available') AS table_status,
-            tr.Date_reserved,
-            tr.number_of_people
-
+        SELECT t.Table_db_id, t.Table_number, t.table_capacity, tf.floor_name
         FROM tables t
-
         LEFT JOIN table_floor tf
-            ON t.Table_db_id = tf.Table_db_id
-
-        LEFT JOIN (
-            SELECT r1.*
-            FROM table_reservations r1
-            INNER JOIN (
-                SELECT Table_db_id, MAX(Date_reserved) AS max_date
-                FROM table_reservations
-                GROUP BY Table_db_id
-            ) r2
-            ON r1.Table_db_id = r2.Table_db_id
-            AND r1.Date_reserved = r2.max_date
-        ) tr
-            ON t.Table_db_id = tr.Table_db_id
-
-        ORDER BY tf.floor_name, t.Table_number
+        ON t.Table_db_id = tf.Table_db_id
+        ORDER BY tf.floor_name, t.table_capacity, t.Table_number
     """
-
     cursor.execute(query)
     all_tables = cursor.fetchall()
-
     cursor.close()
     conn.close()
+
+    # Group tables by floor, then by capacity
+    tables_by_floor = {}
+    for table in all_tables:
+        floor = table['floor_name'] or 'Unassigned'
+        if floor not in tables_by_floor:
+            tables_by_floor[floor] = {}
+        capacity = table['table_capacity']
+        if capacity not in tables_by_floor[floor]:
+            tables_by_floor[floor][capacity] = []
+        tables_by_floor[floor][capacity].append(table)
 
     return render_template(
         'activity_Tables.html',
         user=user_info,
-        tables=all_tables
+        tables_by_floor=tables_by_floor
     )
 
 @app.route('/activity_Order_history')
@@ -788,7 +775,6 @@ def logout():
 if __name__ == "__main__":
  app.run(debug=True)
  
-
 
 
 

@@ -632,44 +632,55 @@ body {
 }
 
 /* =========================
-   STATUS PILL (DB STATES)
+   STATUS PILL (ORDER STATE)
 ========================= */
 .status-pill {
-    padding: 4px 10px;
-    border-radius: 999px;
+    padding: 4px 12px;
+    border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
+    color: white;
+    display: inline-block;
     white-space: nowrap;
-    text-transform: capitalize;
+    animation: statusPulse 0.5s ease-in-out;
 }
 
-/* === DB STATUS COLORS === */
-
-.status-pending {
-    background-color: #fff3cd;
-    color: #856404;
+/* Status colors */
+.status-loading {
+    background-color: #007bff; /* blue */
 }
 
-.status-in_progress {
-    background-color: #cce5ff;
-    color: #004085;
+.status-kitchen {
+    background-color: #ffc107; /* yellow */
+    color: #000;
 }
 
 .status-complete {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: #28a745; /* green */
 }
 
 .status-cancelled {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #dc3545; /* red */
 }
 
-/* Fallback (safety only) */
-.status-unknown {
-    background-color: #e0e0e0;
-    color: #555;
+.status-default {
+    background-color: #6c757d; /* fallback gray */
 }
+
+@keyframes statusPulse {
+    0% {
+        transform: scale(0.85);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
+
+
 .activity-display-screen {
     padding: 12px;
     background: #f9f9f9;

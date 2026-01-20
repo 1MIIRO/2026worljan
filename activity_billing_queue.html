@@ -292,13 +292,11 @@
             });
         });
     
-        document.addEventListener('DOMContentLoaded', () => {
+       document.addEventListener('DOMContentLoaded', () => {
 
             const content = document.getElementById('orderCardsContent');
 
             async function fetchOrderCards() {
-                const content = document.getElementById('orderCardsContent');
-
                 try {
                     const res = await fetch('/order_display_cards');
                     const orders = await res.json();
@@ -306,17 +304,52 @@
                     content.innerHTML = '';
 
                     orders.forEach(order => {
+
+                        /* ===============================
+                        STATUS MAPPING (PER ORDER)
+                        =============================== */
+                        let statusText = 'Unknown';
+                        let statusClass = 'status-default';
+
+                        switch ((order.order_status || '').toLowerCase()) {
+                            case 'pending':
+                                statusText = 'Loading';
+                                statusClass = 'status-loading';
+                                break;
+
+                            case 'in_progress':
+                                statusText = 'On kitchen hand';
+                                statusClass = 'status-kitchen';
+                                break;
+
+                            case 'complete':
+                                statusText = 'Complete';
+                                statusClass = 'status-complete';
+                                break;
+
+                            case 'cancelled':
+                                statusText = 'Cancelled';
+                                statusClass = 'status-cancelled';
+                                break;
+                        }
+
+                        /* ===============================
+                        CARD
+                        =============================== */
                         const card = document.createElement('div');
                         card.className = 'order-card';
 
+                        /* ===============================
+                        HEADER
+                        =============================== */
                         const header = document.createElement('div');
                         header.className = 'order-header';
 
                         header.innerHTML = `
                             <strong>${order.customer_name}</strong>
 
-                            <span class="status-pill status-${order.order_status}">
-                                ${order.order_status.replace('_', ' ')}
+                            <span class="status-pill ${statusClass}">
+                                ${statusText}
                             </span>
 
                             <div>${order.table_number} · ${order.category}</div>
@@ -329,19 +362,50 @@
 
                         card.appendChild(header);
 
+                        /* ===============================
+                        ITEMS
+                        =============================== */
                         const itemsContainer = document.createElement('div');
                         itemsContainer.className = 'items-container';
 
-                        order.items.forEach((item, idx) => {
+                        (order.items || []).forEach((item, idx) => {
                             const row = document.createElement('div');
                             row.className = 'item-row';
                             row.textContent = `${item.quantity} × ${item.good_name}`;
+
                             if (idx >= 3) row.style.display = 'none';
                             itemsContainer.appendChild(row);
                         });
 
+                        /* ===============================
+                        SEE MORE / LESS
+                        =============================== */
+                        if ((order.items || []).length > 3) {
+                            const seeMoreBtn = document.createElement('button');
+                            seeMoreBtn.className = 'see-more-btn';
+                            seeMoreBtn.textContent = 'See More';
+
+                            let expanded = false;
+                            seeMoreBtn.onclick = () => {
+                                expanded = !expanded;
+
+                                Array.from(itemsContainer.children).forEach((child, idx) => {
+                                    if (idx >= 3 && !child.classList.contains('see-more-btn')) {
+                                        child.style.display = expanded ? 'block' : 'none';
+                                    }
+                                });
+
+                                seeMoreBtn.textContent = expanded ? 'See Less' : 'See More';
+                            };
+
+                            itemsContainer.appendChild(seeMoreBtn);
+                        }
+
                         card.appendChild(itemsContainer);
 
+                        /* ===============================
+                        FOOTER
+                        =============================== */
                         const footer = document.createElement('div');
                         footer.className = 'order-footer';
                         footer.innerHTML = `
@@ -361,7 +425,6 @@
 
             fetchOrderCards();
             setInterval(fetchOrderCards, 10000);
-
         });
 
         document.addEventListener('DOMContentLoaded', () => {
