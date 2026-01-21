@@ -88,8 +88,18 @@ body {
 .order-top-bar {
     display: flex;
     align-items: center;
-    padding: 10px;
+    justify-content: space-between; /* buttons left & right */
     border-bottom: 1px solid #ccc;
+    padding: 5px 10px;
+    position: relative; /* needed for absolute centering of middle */
+}
+
+.order-top-bar {
+    background-color: #0d6efd; /* Blue background */
+    text-align: center;
+    padding: 20px 0;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
 }
 
 .order-top-bar input {
@@ -418,6 +428,113 @@ body {
     display: none !important;
 }
 
+/* Scrollable display inside Order Panel */
+#Order_panel_display_table_reservations {
+    background-color: #f8f9fa; /* light background, adjust as needed */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-height: 400px; /* keeps panel size fixed, scrolls if content exceeds */
+    overflow-y: auto;
+    margin-top: 10px;
+    padding: 15px;
+}
+
+/* Optional placeholder styling */
+#Order_panel_display_table_reservations .display-placeholder {
+    color: #555;
+    font-style: italic;
+}
+
+#Order_panel_display_table_reservations {
+    flex: 1;                     /* <-- THIS is the key */
+    overflow-y: auto;            /* scrolling */
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 12px;
+    max-height: 600px;                /* increase this value to make it taller */                 /* adds scroll if content exceeds max-height */
+    
+}
+
+/* ===================== ORDER PANEL RECTANGLES ===================== */
+#order_pannel_reservations_display_rectangles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Base rectangle */
+.reservation-rectangle {
+    background: #ffffff;
+    border: 2px solid #0d6efd;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/* Header row (always visible) */
+.reservation-header {
+    display: flex;
+    gap: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Expanded content hidden by default */
+.reservation-body {
+    margin-top: 14px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 14px;
+}
+
+/* Expanded state */
+.reservation-rectangle.expanded .reservation-body {
+    display: flex;
+}
+
+/* Field row */
+.reservation-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Inputs (visual only) */
+.reservation-field input,
+.reservation-field textarea,
+.reservation-field select {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+/* Footer buttons */
+.reservation-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 14px;
+}
+
+.reservation-footer button {
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: none;
+    font-weight: 600;
+}
+
+.save-btn {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.collapse-btn {
+    background-color: #65000a;  /* red */
+    color: rgb(255, 251, 251);
+}
 
 
 

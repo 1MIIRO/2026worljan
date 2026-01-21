@@ -29,29 +29,18 @@
 
 <!-- ORDER PANEL -->
 <div id="orderContainer" class="order-container">
+    <!-- Top Title -->
     <div class="order-top-bar">
-        <button class="btn btn-light btn-sm">
-            <img src="{{ url_for('static', filename='images/nootpad_icon.jpg') }}" style="width:16px;">
-        </button>
-        <input type="text" placeholder="Customer Name">
-        <button class="btn btn-light btn-sm">
-            <img src="{{ url_for('static', filename='images/pencil_icon.jpg') }}" style="width:16px;">
-        </button>
+        <h1 class="order-panel-title">TABLE RESERVATION</h1>
     </div>
 
-    <div class="order-dropdowns p-3">
-        <div class="dropdown">
-            <button class="dropdown-btn">Table ▼</button>
-            <div class="dropdown-content" style="display:none;"></div>
+    <!-- NEW DISPLAY SCREEN -->
+    <div id="Order_panel_display_table_reservations" class="order-panel-display p-3">
+        <!-- Placeholder content -->
+        <!-- ORDER PANEL RESERVATIONS DISPLAY -->
+        <div id="order_pannel_reservations_display_rectangles">
+            <!-- rectangles injected by JS -->
         </div>
-        <div class="dropdown">
-            <button class="dropdown-btn">Dine_in ▼</button>
-            <div class="dropdown-content" style="display:none;"></div>
-        </div>
-    </div>
-
-    <div class="order-content p-3">
-        <p>Order details will appear here...</p>
     </div>
 </div>
 
@@ -108,7 +97,7 @@
                     <button class="pill-btn" data-floor-btn="3rd_floor">3rd Floor</button>
 
                     <button id="pencilToggle" class="btn btn-light btn-sm ms-auto">
-                         <img src="{{ url_for('static', filename='images\pencil_icon.jpg') }}" style="width:16px;">
+                         <img src="{{ url_for('static', filename='images/pencil_icon.jpg') }}" style="width:16px;">
                     </button>
 
                 </div>
@@ -280,6 +269,121 @@
                 floorSection.classList.toggle('hidden-floor');
             }
         });
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const container = document.getElementById('Order_panel_display_table_reservations');
+
+        async function loadTables() {
+            try {
+                // Fetch tables from your Flask endpoint
+                const resTables = await fetch('/get_tables_display');
+                const tables = await resTables.json();
+
+                // Fetch reservation statuses from your Flask endpoint
+                const resStatuses = await fetch('/get_reservation_statuses');
+                const statuses = await resStatuses.json();
+
+                // Clear the container
+                container.innerHTML = '';
+
+                // Loop through tables
+                tables.forEach(table => {
+                    const rect = document.createElement('div');
+                    rect.className = 'reservation-rectangle';
+
+                    rect.innerHTML = `
+                        <div class="reservation-header">
+                            <div>${table.Table_number}</div>
+                            <div>${table.Table_db_id}</div>
+                            <div>${table.table_capacity} seats</div>
+                        </div>
+
+                        <div class="reservation-body">
+
+                            <div>Table Floor : <input type="text" value="${table.floor_name || ''}" readonly></div>
+
+                            <div>🕒 Date for reservation: <input type="time" placeholder="HH:MM"></div>
+                            <div>🕒 Time for reservation: <input type="date" placeholder="YYYY-MM-DD"></div>
+                            <div>🕒 Date/time reservation made: <input type="text" value="${new Date().toLocaleString()}" readonly></div>
+
+                            <div>Number of people: <input type="number" placeholder="Persons"></div>
+                            <div>Customer name: <input type="text" placeholder="Customer Name"></div>
+                            <div>Reservation notes: <input type="text" placeholder="Notes"></div>
+
+                            <!-- STATUS DROPDOWN -->
+                            <div class="status-dropdown" style="position: relative; margin-top: 5px;">
+                                <button class="dropdown-btn">Select Status ▼</button>
+                                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 150px; overflow-y: auto;"></div>
+                            </div>
+
+                            <div class="reservation-footer">
+                                <button class="save-btn">Save</button>
+                                <button class="collapse-btn" style="background-color: red;">Collapse</button>
+                            </div>
+                        </div>
+                    `;
+
+                    // EXPAND rectangle on click
+                    rect.addEventListener('click', () => {
+                        if (!rect.classList.contains('expanded')) {
+                            rect.classList.add('expanded');
+                        }
+                    });
+
+                    // COLLAPSE button
+                    const collapseBtn = rect.querySelector('.collapse-btn');
+                    collapseBtn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        rect.classList.remove('expanded');
+                    });
+
+                    // SETUP STATUS DROPDOWN
+                    const dropdown = rect.querySelector('.status-dropdown');
+                    const dropdownBtn = dropdown.querySelector('.dropdown-btn');
+                    const dropdownContent = dropdown.querySelector('.dropdown-content');
+
+                    // Populate options from Flask
+                    statuses.forEach(status => {
+                        const option = document.createElement('div');
+                        option.textContent = status.status_name;
+                        option.dataset.value = status.reservation_status_id;
+                        option.style.padding = "6px 10px";
+                        option.style.cursor = "pointer";
+
+                        option.addEventListener('click', () => {
+                            dropdownBtn.textContent = status.status_name + ' ▼';
+                            dropdownBtn.dataset.selectedId = status.reservation_status_id; // store selected ID
+                            dropdownContent.style.display = 'none';
+                        });
+
+                        dropdownContent.appendChild(option);
+                    });
+
+                    // Toggle dropdown
+                    dropdownBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const isVisible = dropdownContent.style.display === 'block';
+                        dropdownContent.style.display = isVisible ? 'none' : 'block';
+                    });
+
+                    // Close dropdown if clicked outside
+                    document.addEventListener('click', () => {
+                        dropdownContent.style.display = 'none';
+                    });
+
+                    container.appendChild(rect);
+                });
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div style="color:red">Failed to load tables or reservation statuses</div>';
+            }
+        }
+
+        loadTables();
+
     });
 
 </script>

@@ -53,7 +53,7 @@ def get_connection():
     return mysql.connector.connect(
         host='localhost',
         user='root',
-        password='',
+        password='1234',
         database='bakery_busness'
     )
 
@@ -131,6 +131,16 @@ def insert_into_order_table(order_number):
     cursor.close()
     conn.close()
 
+@app.route('/get_reservation_statuses')
+def get_reservation_statuses():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT reservation_status_id, status_name FROM reservation_status")
+    reservationstatuses = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(reservationstatuses )
+
 @app.route('/')
 def login_page():
     return render_template_string(login_page_html)
@@ -142,7 +152,7 @@ def login():
 
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM `users` WHERE user_name=%s AND user_password=%s", (username, password))
+    cursor.execute("SELECT * FROM `user` WHERE user_name=%s AND user_password=%s", (username, password))
     user = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -289,6 +299,29 @@ def activity_Tables():
         user=user_info,
         tables_by_floor=tables_by_floor
     )
+
+@app.route('/get_tables_display', methods=['GET'])
+def get_tables_display():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Fetch all tables with their floor info
+    cursor.execute("""
+        SELECT 
+            t.Table_db_id,
+            t.Table_number,
+            t.table_capacity,
+            tf.floor_name
+        FROM tables t
+        LEFT JOIN table_floor tf ON t.Table_db_id = tf.Table_db_id
+        ORDER BY t.Table_number ASC
+    """)
+
+    tables = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(tables)
 
 @app.route('/activity_Order_history')
 def activity_Order_history():
@@ -775,7 +808,6 @@ def logout():
 if __name__ == "__main__":
  app.run(debug=True)
  
-
 
 
 
