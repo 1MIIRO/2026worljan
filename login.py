@@ -800,6 +800,114 @@ def update_order_status():
 
     return jsonify({'success': True})
 
+@app.route('/save_table_reservation', methods=['POST'])
+def save_table_reservation():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+
+    data = request.json
+    user_id = session['user_id']
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # 1️⃣ Insert into table_reservations
+        cursor.execute("""
+            INSERT INTO table_reservations
+            (number_of_people, reservation_notes, resservation_date, reservation_time, Datetime_reservation_was_made)
+            VALUES (%s, %s, %s, %s, NOW())
+        """, (
+            data['number_of_people'],
+            data['reservation_notes'],
+            data['reservation_date'],  # frontend key matches, DB column = resservation_date
+            data['reservation_time']
+        ))
+
+        reservation_id = cursor.lastrowid
+
+        # 2️⃣ Insert into table_reservation_status
+        cursor.execute("""
+            INSERT INTO table_reservation_status
+            (reservation_id, reservation_status_id, datetime_of_status)
+            VALUES (%s, %s, NOW())
+        """, (
+            reservation_id,
+            data['reservation_status_id']
+        ))
+
+        # 3️⃣ Insert into customer_table_reservations
+        cursor.execute("""
+            INSERT INTO customer_table_reservations
+            (reservation_id, customer_name)
+            VALUES (%s, %s)
+        """, (
+            reservation_id,
+            data['customer_name']
+        ))
+
+        # 4️⃣ Insert into user_reservations
+        cursor.execute("""
+            INSERT INTO user_reservations
+            (user_id, reservation_id)
+            VALUES (%s, %s)
+        """, (
+            user_id,
+            reservation_id
+        ))
+
+        cursor.execute("""
+            INSERT INTO table_reservation_link
+            (table_id, reservation_id)
+            VALUES (%s, %s)
+        """, (
+            data['table_id'],  # table selected from frontend
+            reservation_id
+        ))
+
+        conn.commit()
+        return jsonify({'success': True, 'reservation_id': reservation_id})
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/update_reservation_status', methods=['POST'])
+def update_reservation_status():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+
+    data = request.json
+    reservation_id = data.get('reservation_id')
+    new_status_id = data.get('reservation_status_id')
+
+    if not reservation_id or not new_status_id:
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO table_reservation_status (reservation_id, reservation_status_id, datetime_of_status)
+            VALUES (%s, %s, NOW())
+        """, (reservation_id, new_status_id))
+
+        conn.commit()
+        return jsonify({'success': True})
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/logout')
 def logout():
     session.clear()

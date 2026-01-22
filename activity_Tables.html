@@ -273,119 +273,213 @@
     
     document.addEventListener('DOMContentLoaded', () => {
 
-        const container = document.getElementById('Order_panel_display_table_reservations');
+    const container = document.getElementById('Order_panel_display_table_reservations');
 
-        async function loadTables() {
-            try {
-                // Fetch tables from your Flask endpoint
-                const resTables = await fetch('/get_tables_display');
-                const tables = await resTables.json();
+    async function loadTables() {
+        try {
+            const resTables = await fetch('/get_tables_display');
+            const tables = await resTables.json();
 
-                // Fetch reservation statuses from your Flask endpoint
-                const resStatuses = await fetch('/get_reservation_statuses');
-                const statuses = await resStatuses.json();
+            const resStatuses = await fetch('/get_reservation_statuses');
+            const statuses = await resStatuses.json();
 
-                // Clear the container
-                container.innerHTML = '';
+            container.innerHTML = '';
 
-                // Loop through tables
-                tables.forEach(table => {
-                    const rect = document.createElement('div');
-                    rect.className = 'reservation-rectangle';
+            const todayStr = new Date().toISOString().split('T')[0];
 
-                    rect.innerHTML = `
-                        <div class="reservation-header">
-                            <div>${table.Table_number}</div>
-                            <div>${table.Table_db_id}</div>
-                            <div>${table.table_capacity} seats</div>
+            tables.forEach(table => {
+                const rect = document.createElement('div');
+                rect.className = 'reservation-rectangle';
+
+                // Load saved data if reserved
+                const savedData = JSON.parse(localStorage.getItem(`table_${table.Table_db_id}`)) || {};
+
+                rect.innerHTML = `
+                    <div class="reservation-header">
+                        <div>${table.Table_number}</div>
+                        <div>${table.Table_db_id}</div>
+                        <div>${table.table_capacity} seats</div>
+                    </div>
+
+                    <div class="reservation-body">
+                        <div>Table Floor : <input type="text" value="${savedData.floor || table.floor_name || ''}" readonly></div>
+                        <div>🕒 Time for reservation: <input type="time" value="${savedData.reservation_time || ''}" placeholder="HH:MM"></div>
+                        <div>🕒 Date for reservation: <input type="date" value="${savedData.reservation_date || ''}" placeholder="YYYY-MM-DD"></div>
+                        <div>🕒 Date/time reservation made: <input type="text" value="${savedData.date_time || new Date().toLocaleString()}" readonly></div>
+                        <div>Number of people: <input type="number" value="${savedData.number_of_people || ''}" placeholder="Persons"></div>
+                        <div>Customer name: <input type="text" value="${savedData.customer_name || ''}" placeholder="Customer Name"></div>
+                        <div>Reservation notes: <input type="text" value="${savedData.reservation_notes || ''}" placeholder="Notes"></div>
+
+                        <div class="status-dropdown" style="position: relative; margin-top: 5px;">
+                            <button class="dropdown-btn">${savedData.status_name || 'Select Status'} ▼</button>
+                            <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 150px; overflow-y: auto;"></div>
                         </div>
 
-                        <div class="reservation-body">
-
-                            <div>Table Floor : <input type="text" value="${table.floor_name || ''}" readonly></div>
-
-                            <div>🕒 Date for reservation: <input type="time" placeholder="HH:MM"></div>
-                            <div>🕒 Time for reservation: <input type="date" placeholder="YYYY-MM-DD"></div>
-                            <div>🕒 Date/time reservation made: <input type="text" value="${new Date().toLocaleString()}" readonly></div>
-
-                            <div>Number of people: <input type="number" placeholder="Persons"></div>
-                            <div>Customer name: <input type="text" placeholder="Customer Name"></div>
-                            <div>Reservation notes: <input type="text" placeholder="Notes"></div>
-
-                            <!-- STATUS DROPDOWN -->
-                            <div class="status-dropdown" style="position: relative; margin-top: 5px;">
-                                <button class="dropdown-btn">Select Status ▼</button>
-                                <div class="dropdown-content" style="display:none; border: 1px solid #ccc; background: #fff; position: absolute; z-index: 1000; max-height: 150px; overflow-y: auto;"></div>
-                            </div>
-
-                            <div class="reservation-footer">
-                                <button class="save-btn">Save</button>
-                                <button class="collapse-btn" style="background-color: red;">Collapse</button>
-                            </div>
+                        <div class="reservation-footer">
+                            <button class="save-btn">Save</button>
+                            <button class="collapse-btn" style="background-color: red;">Collapse</button>
                         </div>
-                    `;
+                    </div>
+                `;
 
-                    // EXPAND rectangle on click
-                    rect.addEventListener('click', () => {
-                        if (!rect.classList.contains('expanded')) {
-                            rect.classList.add('expanded');
-                        }
-                    });
+                const header = rect.querySelector('.reservation-header');
 
-                    // COLLAPSE button
-                    const collapseBtn = rect.querySelector('.collapse-btn');
-                    collapseBtn.addEventListener('click', e => {
-                        e.stopPropagation();
-                        rect.classList.remove('expanded');
-                    });
+                // Apply purple if saved as Reserved and today
+                const reservationDate = savedData.reservation_date;
+                const statusName = savedData.status_name || '';
+                if (statusName.toLowerCase() === 'reserved' && reservationDate === todayStr) {
+                    rect.style.border = '2px solid purple';
+                    header.style.backgroundColor = 'purple';
+                    header.style.color = 'white';
+                    rect.style.color = 'purple';
+                    rect.dataset.isPurple = 'true'; // flag for purple table
+                } else {
+                    rect.dataset.isPurple = 'false';
+                }
 
-                    // SETUP STATUS DROPDOWN
-                    const dropdown = rect.querySelector('.status-dropdown');
-                    const dropdownBtn = dropdown.querySelector('.dropdown-btn');
-                    const dropdownContent = dropdown.querySelector('.dropdown-content');
+                // EXPAND rectangle on click
+                rect.addEventListener('click', () => {
+                    if (!rect.classList.contains('expanded')) {
+                        rect.classList.add('expanded');
+                    }
+                });
 
-                    // Populate options from Flask
-                    statuses.forEach(status => {
-                        const option = document.createElement('div');
-                        option.textContent = status.status_name;
-                        option.dataset.value = status.reservation_status_id;
-                        option.style.padding = "6px 10px";
-                        option.style.cursor = "pointer";
+                const collapseBtn = rect.querySelector('.collapse-btn');
+                collapseBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    rect.classList.remove('expanded');
+                });
 
-                        option.addEventListener('click', () => {
+                // SETUP STATUS DROPDOWN
+                const dropdown = rect.querySelector('.status-dropdown');
+                const dropdownBtn = dropdown.querySelector('.dropdown-btn');
+                const dropdownContent = dropdown.querySelector('.dropdown-content');
+
+                statuses.forEach(status => {
+                    const option = document.createElement('div');
+                    option.textContent = status.status_name;
+                    option.dataset.value = status.reservation_status_id;
+                    option.style.padding = "6px 10px";
+                    option.style.cursor = "pointer";
+
+                    option.addEventListener('click', () => {
+                        // Only allow "Seated" if table is purple and currently Reserved
+                        if (status.status_name.toLowerCase() === 'seated' && rect.dataset.isPurple === 'true' && statusName.toLowerCase() === 'reserved') {
+                            dropdownBtn.textContent = 'Seated ▼';
+                            dropdownBtn.dataset.selectedId = status.reservation_status_id;
+                        } else if (status.status_name.toLowerCase() !== 'seated') {
                             dropdownBtn.textContent = status.status_name + ' ▼';
-                            dropdownBtn.dataset.selectedId = status.reservation_status_id; // store selected ID
-                            dropdownContent.style.display = 'none';
-                        });
-
-                        dropdownContent.appendChild(option);
-                    });
-
-                    // Toggle dropdown
-                    dropdownBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const isVisible = dropdownContent.style.display === 'block';
-                        dropdownContent.style.display = isVisible ? 'none' : 'block';
-                    });
-
-                    // Close dropdown if clicked outside
-                    document.addEventListener('click', () => {
+                            dropdownBtn.dataset.selectedId = status.reservation_status_id;
+                        } else {
+                            alert('You can only change Reserved (purple) table to Seated.');
+                        }
                         dropdownContent.style.display = 'none';
                     });
 
-                    container.appendChild(rect);
+                    dropdownContent.appendChild(option);
                 });
 
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = '<div style="color:red">Failed to load tables or reservation statuses</div>';
-            }
+                dropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isVisible = dropdownContent.style.display === 'block';
+                    dropdownContent.style.display = isVisible ? 'none' : 'block';
+                });
+
+                const saveBtn = rect.querySelector('.save-btn');
+
+                saveBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+
+                    const payload = {
+                        table_id: table.Table_db_id,
+                        reservation_time: rect.querySelector('input[type="time"]').value,
+                        reservation_date: rect.querySelector('input[type="date"]').value,
+                        number_of_people: rect.querySelector('input[type="number"]').value,
+                        customer_name: rect.querySelector('input[placeholder="Customer Name"]').value,
+                        reservation_notes: rect.querySelector('input[placeholder="Notes"]').value,
+                        reservation_status_id: dropdownBtn.dataset.selectedId
+                    };
+
+                    if (!payload.reservation_status_id) {
+                        alert("Please select a reservation status");
+                        return;
+                    }
+
+                    const res = await fetch('/save_table_reservation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await res.json();
+
+                    if (result.success) {
+                        alert("Reservation saved successfully");
+
+                        const selectedStatus = statuses.find(s => s.reservation_status_id == payload.reservation_status_id);
+
+                        // If saved as Reserved → purple
+                        if (selectedStatus.status_name.toLowerCase() === 'reserved' && payload.reservation_date === todayStr) {
+                            localStorage.setItem(`table_${table.Table_db_id}`, JSON.stringify({
+                                floor: table.floor_name || '',
+                                reservation_time: payload.reservation_time,
+                                reservation_date: payload.reservation_date,
+                                number_of_people: payload.number_of_people,
+                                customer_name: payload.customer_name,
+                                reservation_notes: payload.reservation_notes,
+                                date_time: new Date().toLocaleString(),
+                                status_name: selectedStatus.status_name
+                            }));
+
+                            rect.style.border = '2px solid purple';
+                            header.style.backgroundColor = 'purple';
+                            header.style.color = 'white';
+                            rect.dataset.isPurple = 'true';
+                        }
+
+                        // If changing Reserved → Seated on purple table
+                        if (selectedStatus.status_name.toLowerCase() === 'seated' && rect.dataset.isPurple === 'true' && statusName.toLowerCase() === 'reserved') {
+                            localStorage.setItem(`table_${table.Table_db_id}`, JSON.stringify({
+                                floor: table.floor_name || '',
+                                reservation_time: payload.reservation_time,
+                                reservation_date: payload.reservation_date,
+                                number_of_people: payload.number_of_people,
+                                customer_name: payload.customer_name,
+                                reservation_notes: payload.reservation_notes,
+                                date_time: new Date().toLocaleString(),
+                                status_name: selectedStatus.status_name
+                            }));
+
+                            rect.style.border = '2px solid red';
+                            header.style.backgroundColor = 'red';
+                            header.style.color = 'black';
+                            rect.dataset.isPurple = 'false'; // no longer purple
+                        }
+
+                    } else {
+                        alert("Error: " + result.error);
+                    }
+                });
+
+                document.addEventListener('click', () => {
+                    dropdownContent.style.display = 'none';
+                });
+
+                container.appendChild(rect);
+            });
+
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = '<div style="color:red">Failed to load tables or reservation statuses</div>';
         }
+    }
 
-        loadTables();
+    loadTables();
 
-    });
+});
 
+
+       
 </script>
 
 </body>
