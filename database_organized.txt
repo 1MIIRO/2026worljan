@@ -145,13 +145,16 @@ products
 			 'A stacked sandwich with two layers of bread, rich cheese, and savory fillings.');
 
 
-********************************************************************************************************************8
+********************************************************************************************************************
 DROP TABLE product_categories;
+CREATE DATABASE bakery_busness;
+
 
 CREATE TABLE product_categories (
     product_category_number INT AUTO_INCREMENT PRIMARY KEY,
     product_category_name VARCHAR(255) NOT NULL
 );
+
 INSERT INTO product_categories (product_category_number, product_category_name) VALUES
 (1, 'Bread'),
 (2, 'Cake'),
@@ -480,160 +483,7 @@ Table_floor
 				50 rows in set (0.00 sec)
 
 ******************************************************************************
-table_reservations
-
-CREATE TABLE table_reservations (
-    table_reservation_number INT AUTO_INCREMENT PRIMARY KEY,
-
-    Table_db_id INT NOT NULL,
-    user_id INT NULL,
-
-    Date_reserved DATE NULL,
-    number_of_people INT NULL,
-
-    table_status ENUM('available','reserved','served')
-        NOT NULL DEFAULT 'available',
-
-    CONSTRAINT fk_table_reservation_table
-        FOREIGN KEY (Table_db_id)
-        REFERENCES tables(Table_db_id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_table_reservation_user
-        FOREIGN KEY (user_id)
-        REFERENCES user(user_id)
-        ON DELETE SET NULL
-);
-
-		
-		
-
-		+--------------------------+---------------------------------------+------+-----+-----------+----------------+
-		| Field                    | Type                                  | Null | Key | Default   | Extra          |
-		+--------------------------+---------------------------------------+------+-----+-----------+----------------+
-		| table_reservation_number | int                                   | NO   | PRI | NULL      | auto_increment |
-		| Table_db_id              | int                                   | NO   | MUL | NULL      |                |
-		| user_id                  | int                                   | NO   | MUL | NULL      |                |
-		| Date_reserved            | date                                  | NO   |     | NULL      |                |
-		| number_of_people         | int                                   | YES  |     | NULL      |                |
-		| table_status             | enum('available','reserved','served') | NO   |     | available |                |
-		+--------------------------+---------------------------------------+------+-----+-----------+----------------+
- INSERT INTO table_reservations
-(Table_db_id, user_id, Date_reserved, number_of_people, table_status)
-VALUES
--- RESERVED (20 tables) with user_id = 1
-(1, 1, '2025-12-19', 4, 'reserved'),
-(3, 1, '2025-12-19', 2, 'reserved'),
-(5, 1, '2025-12-19', 6, 'reserved'),
-(7, 1, '2025-12-19', 3, 'reserved'),
-(9, 1, '2025-12-19', 5, 'reserved'),
-(12, 1, '2025-12-19', 2, 'reserved'),
-(14, 1, '2025-12-19', 4, 'reserved'),
-(16, 1, '2025-12-19', 6, 'reserved'),
-(18, 1, '2025-12-19', 3, 'reserved'),
-(20, 1, '2025-12-19', 2, 'reserved'),
-(22, 1, '2025-12-19', 5, 'reserved'),
-(24, 1, '2025-12-19', 4, 'reserved'),
-(27, 1, '2025-12-19', 6, 'reserved'),
-(29, 1, '2025-12-19', 2, 'reserved'),
-(31, 1, '2025-12-19', 3, 'reserved'),
-(34, 1, '2025-12-19', 4, 'reserved'),
-(37, 1, '2025-12-19', 2, 'reserved'),
-(39, 1, '2025-12-19', 3, 'reserved'),
-(42, 1, '2025-12-19', 4, 'reserved'),
-(45, 1, '2025-12-19', 5, 'reserved'),
-
--- AVAILABLE (30 tables) with NULLs
-(2, NULL, NULL, NULL, 'available'),
-(4, NULL, NULL, NULL, 'available'),
-(6, NULL, NULL, NULL, 'available'),
-(8, NULL, NULL, NULL, 'available'),
-(10, NULL, NULL, NULL, 'available'),
-(11, NULL, NULL, NULL, 'available'),
-(13, NULL, NULL, NULL, 'available'),
-(15, NULL, NULL, NULL, 'available'),
-(17, NULL, NULL, NULL, 'available'),
-(19, NULL, NULL, NULL, 'available'),
-(21, NULL, NULL, NULL, 'available'),
-(23, NULL, NULL, NULL, 'available'),
-(25, NULL, NULL, NULL, 'available'),
-(26, NULL, NULL, NULL, 'available'),
-(28, NULL, NULL, NULL, 'available'),
-(30, NULL, NULL, NULL, 'available'),
-(32, NULL, NULL, NULL, 'available'),
-(33, NULL, NULL, NULL, 'available'),
-(35, NULL, NULL, NULL, 'available'),
-(36, NULL, NULL, NULL, 'available'),
-(38, NULL, NULL, NULL, 'available'),
-(40, NULL, NULL, NULL, 'available'),
-(41, NULL, NULL, NULL, 'available'),
-(43, NULL, NULL, NULL, 'available'),
-(44, NULL, NULL, NULL, 'available'),
-(46, NULL, NULL, NULL, 'available'),
-(47, NULL, NULL, NULL, 'available'),
-(48, NULL, NULL, NULL, 'available'),
-(49, NULL, NULL, NULL, 'available'),
-(50, NULL, NULL, NULL, 'available');
-
-		
-	+--------------------------+-------------+---------+---------------+------------------+--------------+
-| table_reservation_number | Table_db_id | user_id | Date_reserved | number_of_people | table_status |
-+--------------------------+-------------+---------+---------------+------------------+--------------+
-|                       51 |           1 |       1 | 2025-12-19    |                4 | reserved     |
-|                       52 |           3 |       1 | 2025-12-19    |                2 | reserved     |
-|                       53 |           5 |       1 | 2025-12-19    |                6 | reserved     |
-|                       54 |           7 |       1 | 2025-12-19    |                3 | reserved     |
-|                       55 |           9 |       1 | 2025-12-19    |                5 | reserved     |
-|                       56 |          12 |       1 | 2025-12-19    |                2 | reserved     |
-|                       57 |          14 |       1 | 2025-12-19    |                4 | reserved     |
-|                       58 |          16 |       1 | 2025-12-19    |                6 | reserved     |
-|                       59 |          18 |       1 | 2025-12-19    |                3 | reserved     |
-|                       60 |          20 |       1 | 2025-12-19    |                2 | reserved     |
-|                       61 |          22 |       1 | 2025-12-19    |                5 | reserved     |
-|                       62 |          24 |       1 | 2025-12-19    |                4 | reserved     |
-|                       63 |          27 |       1 | 2025-12-19    |                6 | reserved     |
-|                       64 |          29 |       1 | 2025-12-19    |                2 | reserved     |
-|                       65 |          31 |       1 | 2025-12-19    |                3 | reserved     |
-|                       66 |          34 |       1 | 2025-12-19    |                4 | reserved     |
-|                       67 |          37 |       1 | 2025-12-19    |                2 | reserved     |
-|                       68 |          39 |       1 | 2025-12-19    |                3 | reserved     |
-|                       69 |          42 |       1 | 2025-12-19    |                4 | reserved     |
-|                       70 |          45 |       1 | 2025-12-19    |                5 | reserved     |
-|                       71 |           2 |    NULL | NULL          |             NULL | available    |
-|                       72 |           4 |    NULL | NULL          |             NULL | available    |
-|                       73 |           6 |    NULL | NULL          |             NULL | available    |
-|                       74 |           8 |    NULL | NULL          |             NULL | available    |
-|                       75 |          10 |    NULL | NULL          |             NULL | available    |
-|                       76 |          11 |    NULL | NULL          |             NULL | available    |
-|                       77 |          13 |    NULL | NULL          |             NULL | available    |
-|                       78 |          15 |    NULL | NULL          |             NULL | available    |
-|                       79 |          17 |    NULL | NULL          |             NULL | available    |
-|                       80 |          19 |    NULL | NULL          |             NULL | available    |
-|                       81 |          21 |    NULL | NULL          |             NULL | available    |
-|                       82 |          23 |    NULL | NULL          |             NULL | available    |
-|                       83 |          25 |    NULL | NULL          |             NULL | available    |
-|                       84 |          26 |    NULL | NULL          |             NULL | available    |
-|                       85 |          28 |    NULL | NULL          |             NULL | available    |
-|                       86 |          30 |    NULL | NULL          |             NULL | available    |
-|                       87 |          32 |    NULL | NULL          |             NULL | available    |
-|                       88 |          33 |    NULL | NULL          |             NULL | available    |
-|                       89 |          35 |    NULL | NULL          |             NULL | available    |
-|                       90 |          36 |    NULL | NULL          |             NULL | available    |
-|                       91 |          38 |    NULL | NULL          |             NULL | available    |
-|                       92 |          40 |    NULL | NULL          |             NULL | available    |
-|                       93 |          41 |    NULL | NULL          |             NULL | available    |
-|                       94 |          43 |    NULL | NULL          |             NULL | available    |
-|                       95 |          44 |    NULL | NULL          |             NULL | available    |
-|                       96 |          46 |    NULL | NULL          |             NULL | available    |
-|                       97 |          47 |    NULL | NULL          |             NULL | available    |
-|                       98 |          48 |    NULL | NULL          |             NULL | available    |
-|                       99 |          49 |    NULL | NULL          |             NULL | available    |
-|                      100 |          50 |    NULL | NULL          |             NULL | available    |
-+--------------------------+-------------+---------+---------------+------------------+--------------+
-50 rows in set (0.00 sec)	
-		
-		
-******************************************************************************		
+	
 
 orders_improved_table
 
@@ -678,6 +528,7 @@ CREATE TABLE order_categories (
     order_categories_ID INT AUTO_INCREMENT PRIMARY KEY,
     order_categories_name VARCHAR(255) NOT NULL
 );
+
 INSERT INTO order_categories (order_categories_name) VALUES
     ('Dine_in'),
     ('Take_away'),
@@ -705,7 +556,7 @@ CREATE TABLE order_with_categories (
 
 
 ****************************************************************************
-DROP TABLE IF EXISTS customer_order;
+DROP TABLE IF EXISTS table_reservations;
 
 
 -- Customer Order table
@@ -836,40 +687,11 @@ ORDER BY o.TIME DESC;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CREATE TABLE tax_discount_table (
          TAX_RATE INT NOT NULL,
          discount_amount INT NOT NULL,
          discount_status VARCHAR(50) NOT NULL
      );
-
-
-
-
-
-
 
 
 ****************************************************************************
@@ -891,26 +713,178 @@ ALTER TABLE orders_improved_table
 MODIFY COLUMN order_identification_number VARCHAR(255);
 
 
-Customa1
-Customa2
-Customa3
-Customa4
-Customa5
-Customa6
-Customa7
-Customa8
+miiro_1
+zinda_2
+eliphaz_3
+jojo_4
+john_5
+joshua_6
+zeke_7
+warren_8
+
+*****************************************************************************
+
+CREATE TABLE reservation_status (
+    reservation_status_id INT AUTO_INCREMENT PRIMARY KEY,
+    status_name VARCHAR(50) NOT NULL UNIQUE
+);
 
 
++-----------------------+-------------+------+-----+---------+----------------+
+| Field                 | Type        | Null | Key | Default | Extra          |
++-----------------------+-------------+------+-----+---------+----------------+
+| reservation_status_id | int         | NO   | PRI | NULL    | auto_increment |
+| status_name           | varchar(50) | NO   | UNI | NULL    |                |
++-----------------------+-------------+------+-----+---------+----------------+
+2 rows in set (0.04 sec)
 
 
+INSERT INTO reservation_status (status_name) VALUES
+('Available'),
+('Reserved'),
+('Seated'),
+('Completed'),
+('Cancelled');
+***********************************************************************************
+
+table_reservations
+
+CREATE TABLE table_reservations (
+    reservation_id INT AUTO_INCREMENT PRIMARY KEY,
+    number_of_people INT NOT NULL,
+    reservation_notes TEXT,
+
+    resservation_date DATE NOT NULL,
+    reservation_time TIME NOT NULL,
+
+    Datetime_reservation_was_made DATETIME DEFAULT CURRENT_TIMESTAMP
+
+);
 
 
++-------------------------------+----------+------+-----+-------------------+-------------------+
+| Field                         | Type     | Null | Key | Default           | Extra             |
++-------------------------------+----------+------+-----+-------------------+-------------------+
+| reservation_id                | int      | NO   | PRI | NULL              | auto_increment    |
+| number_of_people              | int      | NO   |     | NULL              |                   |
+| reservation_notes             | text     | YES  |     | NULL              |                   |
+| resservation_date             | date     | NO   |     | NULL              |                   |
+| reservation_time              | time     | NO   |     | NULL              |                   |
+| Datetime_reservation_was_made | datetime | YES  |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
++-------------------------------+----------+------+-----+-------------------+-------------------+
+6 rows in set (0.00 sec
+
+***************************************************************************************
+table_reservation_status 
+
+CREATE TABLE table_reservation_status (
+    reservation_id INT NOT NULL,
+    reservation_status_id INT NOT NULL,
+    datetime_of_status DATETIME NOT NULL,
+
+    CONSTRAINT fk_customer_reservation
+        FOREIGN KEY (reservation_id)
+        REFERENCES table_reservations(reservation_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_reservation_status
+        FOREIGN KEY (reservation_status_id)
+        REFERENCES reservation_status(reservation_status_id)
+        ON DELETE RESTRICT
+);
+
++-----------------------+----------+------+-----+---------+-------+
+| Field                 | Type     | Null | Key | Default | Extra |
++-----------------------+----------+------+-----+---------+-------+
+| reservation_id        | int      | NO   | MUL | NULL    |       |
+| reservation_status_id | int      | NO   | MUL | NULL    |       |
+| datetime_of_status    | datetime | NO   |     | NULL    |       |
++-----------------------+----------+------+-----+---------+-------+
+
+*******************************************************************************************
+CREATE TABLE customer_table_reservations (
+    customer_table_reservation_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    reservation_id INT NOT NULL,
+    customer_name VARCHAR(120) NOT NULL,
+
+    CONSTRAINT fk_ctr_reservation
+        FOREIGN KEY (reservation_id)
+        REFERENCES table_reservations(reservation_id)
+        ON DELETE CASCADE
+);
 
 
++-------------------------------+--------------+------+-----+---------+----------------+
+| Field                         | Type         | Null | Key | Default | Extra          |
++-------------------------------+--------------+------+-----+---------+----------------+
+| customer_table_reservation_id | int          | NO   | PRI | NULL    | auto_increment |
+| reservation_id                | int          | NO   | MUL | NULL    |                |
+| customer_name                 | varchar(120) | NO   |     | NULL    |                |
++-------------------------------+--------------+------+-----+---------+----------------+
+3 rows in set (0.00 sec)
+
+********************************************************************************************
+
+CREATE TABLE user_reservations (
+    user_reservations_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    user_id INT NOT NULL,
+    reservation_id INT NOT NULL,
+
+    CONSTRAINT fk_user_reservations_user
+        FOREIGN KEY (user_id)
+        REFERENCES user(user_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_user_reservations_reservation
+        FOREIGN KEY (reservation_id)
+        REFERENCES table_reservations(reservation_id)
+        ON DELETE CASCADE,
+
+    UNIQUE (user_id, reservation_id)
+);
+
++----------------------+------+------+-----+---------+----------------+
+| Field                | Type | Null | Key | Default | Extra          |
++----------------------+------+------+-----+---------+----------------+
+| user_reservations_id | int  | NO   | PRI | NULL    | auto_increment |
+| user_id              | int  | NO   | MUL | NULL    |                |
+| reservation_id       | int  | NO   | MUL | NULL    |                |
++----------------------+------+------+-----+---------+----------------+
+3 rows in set (0.00 sec)
+
+******************************************************************************
+
+CREATE TABLE table_reservation_link (
+    table_reservation_link_id INT AUTO_INCREMENT PRIMARY KEY,
+    table_id INT NOT NULL,
+    reservation_id INT NOT NULL,
+    CONSTRAINT fk_table
+        FOREIGN KEY (table_id)
+        REFERENCES tables(Table_db_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_reservation
+        FOREIGN KEY (reservation_id)
+        REFERENCES table_reservations(reservation_id)
+        ON DELETE CASCADE
+);
+
++---------------------------+------+------+-----+---------+----------------+
+| Field                     | Type | Null | Key | Default | Extra          |
++---------------------------+------+------+-----+---------+----------------+
+| table_reservation_link_id | int  | NO   | PRI | NULL    | auto_increment |
+| table_id                  | int  | NO   | MUL | NULL    |                |
+| reservation_id            | int  | NO   | MUL | NULL    |                |
++---------------------------+------+------+-----+---------+----------------+
+3 rows in set (0.05 sec)
 
 
+***************************************************************************************************
 
+Audit_log  
 
+Audit_log 
 
    
 	   

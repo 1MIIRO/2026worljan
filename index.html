@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Table Reservations</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script>
+// Toggle the whole card
+function toggleCard(id) {
+    const card = document.getElementById("card-" + id);
+    card.classList.toggle("expanded");
+}
+
+// Toggle individual existing reservations
+function toggleExistingRes(id) {
+    const resDiv = document.getElementById("existing-res-" + id);
+    resDiv.classList.toggle("expanded");
+}
+</script>
+<style>
+/* Card styling */
+.table-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #fff;
+    position: relative;
+    max-height: 150px;
+}
+
+/* Expanded card */
+.table-card.expanded {
+    max-height: none;
+    overflow: visible;
+}
+
+/* Reserved table highlight */
+.table-card.reserved { background-color: yellow; }
+
+/* Table info clickable area */
+.table-info { cursor: pointer; }
+
+/* Reservation form */
+.reservation-form { margin-top: 10px; }
+
+/* Existing reservations container */
+.existing-reservations { margin-top: 10px; }
+
+/* Individual existing reservation indicator */
+.existing-reservation {
+    padding: 5px;
+    margin: 5px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    background-color: #f0f0f0; /* default */
+    color: #000;               /* default */
+}
+
+/* TODAY reservation */
+.existing-reservation.today {
+    background-color: purple;
+    color: white;
+}
+
+/* Existing reservation details hidden by default */
+.existing-reservation-details {
+    display: none;
+    padding: 5px;
+    margin-top: 5px;
+    border-top: 1px solid #ccc;
+}
+
+/* Show details when expanded */
+.existing-reservation.expanded .existing-reservation-details {
+    display: block;
+}
+
+/* Dropdown and button styling */
+.existing-reservation select, .existing-reservation button {
+    margin-top: 5px;
+}
+.existing-reservation button {
+    background-color: green;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+{% if error_msg %}
+<div style="color:red; font-weight:bold;">{{ error_msg }}</div>
+{% endif %}
+
+<div class="container">
+    {% for table in tables %}
+    {% set res_list = reservation_dict.get(table.Table_db_id, []) %}
+    <div class="table-card {% if res_list %}reserved{% endif %}" id="card-{{ table.Table_db_id }}">
+
+        <!-- Table info -->
+        <div class="table-info" onclick="toggleCard('{{ table.Table_db_id }}')">
+            <p><strong>Table ID:</strong> {{ table.Table_db_id }}</p>
+            <p><strong>Table Number:</strong> {{ table.Table_number }}</p>
+            <p><strong>Capacity:</strong> {{ table.table_capacity }}</p>
+        </div>
+
+        <!-- Existing reservations -->
+        {% if res_list %}
+        <div class="existing-reservations">
+            <h4>Existing Reservations:</h4>
+            {% for res in res_list %}
+            {% set is_today = res.resservation_date == datetime_now.date() %}
+            <div class="existing-reservation {% if is_today %}today{% endif %}" id="existing-res-{{ table.Table_db_id }}-{{ loop.index }}">
+                <p><strong>Date:</strong> {{ res.resservation_date }} | <strong>Time:</strong> {{ res.reservation_time }}</p>
+
+                <!-- Status dropdown -->
+                <form method="POST" style="margin-top: 5px;">
+                    <input type="hidden" name="reservation_id" value="{{ res.reservation_id }}">
+                    <label>Status:</label>
+                    <select name="reservation_status">
+                        {% for status in statuses %}
+                        <option value="{{ status.reservation_status_id }}"
+                            {% if status.reservation_status_id == res.reservation_status_id %} selected {% endif %}>
+                            {{ status.status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- Save button -->
+                    <button type="submit">Save</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- New reservation form -->
+        <div class="reservation-form">
+            <p><strong>Table Floor:</strong> {{ floor_dict.get(table.Table_db_id, 'No floor assigned') }}</p>
+            <form method="POST">
+                <input type="hidden" name="table_id" value="{{ table.Table_db_id }}">
+
+                <label>Number of People:</label>
+                <input type="number" name="number_of_people" required>
+
+                <label>Reservation Notes:</label>
+                <textarea name="reservation_notes" rows="2"></textarea>
+
+                <label>Date Reserved:</label>
+                <input type="date" name="resservation_date" required>
+
+                <label>Time Reserved:</label>
+                <input type="time" name="reservation_time" required>
+
+                <label>Reservation Status:</label>
+                <select name="reservation_status" required>
+                    {% for status in statuses %}
+                    <option value="{{ status.reservation_status_id }}">{{ status.status_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <p><strong>Datetime Reservation Was Made:</strong>
+                    {{ datetime_now.strftime('%Y-%m-%d %H:%M:%S') }}
+                </p>
+
+                <button type="submit">Save Reservation</button>
+            </form>
+        </div>
+
+    </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* =========================
+   TABLE CARD (BASE)
+========================= */
+.table-card {
+    width: 350px;
+    background: #007BFF;        /* BLUE HEADER */
+    color: white;               /* WHITE TEXT */
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Reserved tables → orange accent ONLY */
+.table-card.reserved {
+    box-shadow: 0 0 0 3px orange inset;
+}
+
+/* =========================
+   HEADER AREA (LOCK COLORS)
+========================= */
+.table-info {
+    padding: 20px;
+    cursor: pointer;
+    background: #007BFF;        /* FORCE BLUE */
+    color: white;               /* FORCE WHITE */
+}
+
+.table-info p {
+    margin: 4px 0;
+    color: white;               /* FORCE WHITE TEXT */
+}
+
+/* =========================
+   EXPANDED FORM AREA
+========================= */
+.reservation-form {
+    display: none;
+    background: #f9f9f9;
+    color: black;               /* BLACK TEXT */
+    padding: 15px;
+    max-height: 260px;          /* FIXED HEIGHT */
+    overflow-y: auto;           /* SCROLL */
+}
+
+/* Show form when expanded */
+.table-card.expanded .reservation-form {
+    display: block;
+}
+
+/* =========================
+   FORM ELEMENTS
+========================= */
+.reservation-form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: black;
+}
+
+.reservation-form input,
+.reservation-form textarea,
+.reservation-form select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    color: black;
+}
+
+.reservation-form button {
+    margin-top: 15px;
+    padding: 10px;
+    width: 100%;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.reservation-form button:hover {
+    background: #218838;
+}
