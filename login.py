@@ -147,25 +147,73 @@ def login_page():
 
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM `user` WHERE user_name=%s AND user_password=%s", (username, password))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    if user:
-        # Save user session
-        session['user_id'] = user['user_id']
-        session['user_name'] = user['user_name']
-        session['personal_name'] = user['personal_name']
-        session['job_desc'] = user['job_desc']
-        return jsonify({"success": True})
+        # 1️⃣ Check user credentials
+        cursor.execute("SELECT * FROM `user` WHERE user_name=%s AND user_password=%s", (username, password))
+        user = cursor.fetchone()
 
-    return jsonify({"success": False})
+        if user:
+            # 2️⃣ Save user session
+            session['user_id'] = user['user_id']
+            session['user_name'] = user['user_name']
+            session['personal_name'] = user['personal_name']
+            session['job_desc'] = user['job_desc']
+
+            # 3️⃣ Get Description_audit_id for "LOG-IN"
+            cursor.execute("SELECT description_audit_id FROM Description_audit WHERE Description_Title = %s", ("LOG-IN",))
+            desc_row = cursor.fetchone()
+            if not desc_row:
+                cursor.close()
+                conn.close()
+                return jsonify({"success": False, "error": "LOG-IN description not found"})
+
+            description_audit_id = desc_row['description_audit_id']
+
+            # 4️⃣ Get current date and time
+            now = datetime.now()
+            audit_date = now.date()
+            audit_time = now.time().replace(microsecond=0)
+
+            # 5️⃣ Insert into Audit_Logs (temporary reference number first)
+            cursor.execute("""
+                INSERT INTO Audit_Logs (audit_reference_number, action, audit_date, audit_time, done_by)
+                VALUES (%s, %s, %s, %s, %s)
+            """, ("TEMP", "", audit_date, audit_time, f"{session['user_id']}---{session['personal_name']}---{session['user_name']}"))
+            conn.commit()
+            audit_ID = cursor.lastrowid
+
+            # 6️⃣ Generate audit_reference_number as "#audit_ID.user_id.activity_number"
+            audit_reference_number = f"#{audit_ID}.{session['user_id']}.{description_audit_id}"
+
+            # 7️⃣ Update Audit_Logs with actual reference number and action
+            action_text = f"Login into the system successful done by {session['user_id']}, {session['job_desc']}"
+            cursor.execute("""
+                UPDATE Audit_Logs
+                SET audit_reference_number=%s, action=%s
+                WHERE audit_ID=%s
+            """, (audit_reference_number, action_text, audit_ID))
+            conn.commit()
+
+            # 8️⃣ Insert into audit_desc table
+            cursor.execute("""
+                INSERT INTO audit_desc (audit_ID, description_audit_id)
+                VALUES (%s, %s)
+            """, (audit_ID, description_audit_id))
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+
+            return jsonify({"success": True})
+
+        cursor.close()
+        conn.close()
+        return jsonify({"success": False})
 
 @app.route('/dashboard')
 def dashboard():
@@ -256,34 +304,136 @@ def activity_billing_queue():
     # Pass the tables to the template
     return render_template('activity_billing_queue.html', user=user_info)
 
-@app.route('/activity_Tables')
+@app.route('/activity_Tables', methods=["GET", "POST"])
 def activity_Tables():
+    # --- SESSION CHECK ---
     if 'user_id' not in session:
         return redirect(url_for('login_page'))
 
+    # --- USER INFO ---
     user_info = {
         "user_name": session.get('user_name'),
         "personal_name": session.get('personal_name'),
         "job_desc": session.get('job_desc')
     }
 
+    error_msg = None
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Get all tables and their floor info
-    query = """
+    # --- HANDLE NEW RESERVATION SUBMISSION ---
+    if request.method == "POST":
+        table_id = int(request.form["table_id"])
+        number_of_people = int(request.form["number_of_people"])
+        reservation_notes = request.form["reservation_notes"]
+        resservation_date = request.form["resservation_date"]
+        reservation_time = request.form["reservation_time"]
+        reservation_status_id = int(request.form["reservation_status"])
+        now = datetime.now()
+
+        # ---- CONFLICT CHECK ----
+        cursor.execute("""
+            SELECT tr.reservation_time
+            FROM table_reservations tr
+            JOIN table_reservation_link trl
+              ON tr.reservation_id = trl.reservation_id
+            WHERE trl.table_id = %s
+              AND tr.resservation_date = %s
+        """, (table_id, resservation_date))
+
+        existing = cursor.fetchall()
+        new_time = datetime.strptime(reservation_time, "%H:%M")
+
+        for r in existing:
+            existing_time = datetime.strptime(str(r["reservation_time"]), "%H:%M:%S")
+            if existing_time - timedelta(hours=1) <= new_time <= existing_time + timedelta(hours=2):
+                error_msg = (
+                    "Reservation time conflicts with an existing reservation "
+                    "(1 hour before or 2 hours after)."
+                )
+                break
+
+        if not error_msg:
+            # ---- INSERT reservation ----
+            cursor.execute("""
+                INSERT INTO table_reservations
+                (number_of_people, reservation_notes, resservation_date, reservation_time, Datetime_reservation_was_made)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                number_of_people,
+                reservation_notes,
+                resservation_date,
+                reservation_time,
+                now
+            ))
+            conn.commit()
+
+            reservation_id = cursor.lastrowid
+
+            # ---- INSERT reservation status ----
+            cursor.execute("""
+                INSERT INTO table_reservation_status
+                (reservation_id, reservation_status_id, datetime_of_status)
+                VALUES (%s, %s, %s)
+            """, (reservation_id, reservation_status_id, now))
+            conn.commit()
+
+            # ---- LINK reservation to table ----
+            cursor.execute("""
+                INSERT INTO table_reservation_link
+                (table_id, reservation_id)
+                VALUES (%s, %s)
+            """, (table_id, reservation_id))
+            conn.commit()
+
+            return redirect(url_for('activity_Tables'))
+
+    # --- FETCH ALL TABLES AND FLOOR INFO ---
+    cursor.execute("""
         SELECT t.Table_db_id, t.Table_number, t.table_capacity, tf.floor_name
         FROM tables t
         LEFT JOIN table_floor tf
         ON t.Table_db_id = tf.Table_db_id
         ORDER BY tf.floor_name, t.table_capacity, t.Table_number
-    """
-    cursor.execute(query)
+    """)
     all_tables = cursor.fetchall()
+
+    # --- FETCH STATUSES ---
+    cursor.execute("SELECT * FROM reservation_status")
+    statuses = cursor.fetchall()
+
+    # --- FETCH ALL RESERVATIONS ---
+    cursor.execute("""
+        SELECT
+            trl.table_id,
+            tr.reservation_id,
+            tr.number_of_people,
+            tr.reservation_notes,
+            tr.resservation_date,
+            tr.reservation_time,
+            trs.reservation_status_id,
+            tr.Datetime_reservation_was_made
+        FROM table_reservations tr
+        JOIN table_reservation_link trl
+          ON tr.reservation_id = trl.reservation_id
+        JOIN table_reservation_status trs
+          ON tr.reservation_id = trs.reservation_id
+        ORDER BY tr.resservation_date, tr.reservation_time
+    """)
+    rows = cursor.fetchall()
+
+    # --- GROUP RESERVATIONS BY TABLE ---
+    reservation_dict = {}
+    for r in rows:
+        table_id = r["table_id"]
+        if table_id not in reservation_dict:
+            reservation_dict[table_id] = []
+        reservation_dict[table_id].append(r)
+
     cursor.close()
     conn.close()
 
-    # Group tables by floor, then by capacity
+    # --- GROUP TABLES BY FLOOR AND CAPACITY ---
     tables_by_floor = {}
     for table in all_tables:
         floor = table['floor_name'] or 'Unassigned'
@@ -297,8 +447,62 @@ def activity_Tables():
     return render_template(
         'activity_Tables.html',
         user=user_info,
-        tables_by_floor=tables_by_floor
+        tables_by_floor=tables_by_floor,
+        tables=all_tables,
+        floor_dict={t['Table_db_id']: t['floor_name'] for t in all_tables},
+        statuses=statuses,
+        reservation_dict=reservation_dict,
+        datetime_now=datetime.now(),
+        error_msg=error_msg
     )
+
+@app.route('/audit_logs')
+def audit_logs():
+    # Fetch logs or render template
+    return render_template('audit_logs.html')
+
+@app.route('/get_audit_logs')
+def get_audit_logs():
+    # Connect to database
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # SQL query to join Audit_Logs -> audit_desc -> Description_audit
+    query = """
+    SELECT 
+        a.audit_reference_number,
+        d.Description_Title AS description,
+        a.action,
+        a.audit_date,
+        a.audit_time,
+        a.done_by
+    FROM Audit_Logs a
+    LEFT JOIN audit_desc ad ON a.audit_ID = ad.audit_ID
+    LEFT JOIN Description_audit d ON ad.description_audit_id = d.description_audit_id
+    ORDER BY a.audit_ID ASC
+    """
+    
+    cursor.execute(query)
+    result = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+
+    # Convert date and time objects to strings properly
+    for row in result:
+        if isinstance(row['audit_date'], (datetime,)):
+            row['audit_date'] = row['audit_date'].strftime('%Y-%m-%d')
+        if isinstance(row['audit_time'], (datetime,)):
+            row['audit_time'] = row['audit_time'].strftime('%H:%M:%S')
+        elif isinstance(row['audit_time'], timedelta):
+            total_seconds = int(row['audit_time'].total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            row['audit_time'] = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+    # Now jsonify will work because all datetime/timedelta objects are converted to strings
+    return jsonify(result)
 
 @app.route('/get_tables_display', methods=['GET'])
 def get_tables_display():
@@ -355,14 +559,17 @@ def place_order_table():
     table_id = data.get('table_id')
     order_items = data.get('order_items')
     order_desc = data.get('order_desc')
-
+    unique_goods_count = data.get('unique_goods_count', len(order_items))  # fallback to total items if missing
    
-
     # Validate required fields
     if not  order_type_val or not customer_name or not table_id or not order_items:
         return jsonify({"success": False, "error": "Missing required fields"})
 
     user_id = session['user_id']
+    user_name= session['user_name']
+    personal_name= session['personal_name']
+    job_desc= session['job_desc']
+
     now = datetime.now()
     current_date = now.date()
     current_time = now.time()
@@ -391,7 +598,7 @@ def place_order_table():
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             order_number,
-            items_count,
+            unique_goods_count,
             order_desc,
             user_id,
             total_amount,
@@ -466,11 +673,77 @@ def place_order_table():
             VALUES (%s, %s, %s)
             """, (order_id, 1, now))
         
+        # 🔐 AUDIT LOG FOR ORDER PLACEMENT
+
+        # Get description_audit_id for ORDER
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT description_audit_id FROM Description_audit WHERE Description_Title = %s",
+            ("ORDER",)
+        )
+        desc = cursor.fetchone()
+
+        if desc:
+            description_audit_id = desc['description_audit_id']
+
+            audit_now = datetime.now()
+            audit_date = audit_now.date()
+            audit_time = audit_now.time().replace(microsecond=0)
+
+            # Insert temporary audit log
+            cursor.execute("""
+                INSERT INTO Audit_Logs (
+                    audit_reference_number,
+                    action,
+                    audit_date,
+                    audit_time,
+                    done_by
+                )
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                "TEMP",
+                "",
+                audit_date,
+                audit_time,
+                f"{user_id}---{personal_name}---{user_name}"
+            ))
+            conn.commit()
+
+            audit_ID = cursor.lastrowid
+
+            # Generate reference number
+            audit_reference_number = f"#{audit_ID}.{user_id}.{description_audit_id}"
+
+            action_text = (
+                f"Order #{order_number} placed by {user_name} ({job_desc}). "
+                f"Customer: {customer_name}, "
+                f"Order Type: {order_type_val}, "
+                f"Items Count: {unique_goods_count}, "
+                f"Total Amount: {total_amount:.2f}, "
+                f"Table ID: {table_id}"
+            )
+
+            # Update audit log
+            cursor.execute("""
+                UPDATE Audit_Logs
+                SET audit_reference_number=%s,
+                    action=%s
+                WHERE audit_ID=%s
+            """, (audit_reference_number, action_text, audit_ID))
+
+            # Link audit to description
+            cursor.execute("""
+                INSERT INTO audit_desc (audit_ID, description_audit_id)
+                VALUES (%s, %s)
+            """, (audit_ID, description_audit_id))
+
+            conn.commit()
+
         # Commit all inserts
         conn.commit()
         cursor.close()
         conn.close()
-
+        
         # ✅ Generate a new order number for the next order
         # this updates order_history.json
 
@@ -794,6 +1067,67 @@ def update_order_status():
         WHERE order_ID = %s
     """, (datetime.now(), order_id))
 
+     # Get description_audit_id for ORDER
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+            "SELECT description_audit_id FROM Description_audit WHERE Description_Title = %s",
+            ("ORDER",)
+        )
+    desc = cursor.fetchone()
+    
+    if desc:
+            description_audit_id = desc['description_audit_id']
+            user_id = session['user_id']
+            user_name= session['user_name']
+            personal_name= session['personal_name']
+            job_desc= session['job_desc']
+            audit_now = datetime.now()
+            audit_date = audit_now.date()
+            audit_time = audit_now.time().replace(microsecond=0)
+
+            # Insert temporary audit log
+            cursor.execute("""
+                INSERT INTO Audit_Logs (
+                    audit_reference_number,
+                    action,
+                    audit_date,
+                    audit_time,
+                    done_by
+                )
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                "TEMP",
+                "",
+                audit_date,
+                audit_time,
+                f"{user_id}---{personal_name}---{user_name}"
+            ))
+           
+    
+            audit_ID = cursor.lastrowid
+
+            # Generate reference number
+            audit_reference_number = f"#{audit_ID}.{user_id}.{description_audit_id}"
+
+            action_text = (
+                f"Order #{order_ident_number} status ID Changed by {user_name} ({job_desc}). "
+                f"Status new ID: {new_status_id} "
+            )       
+             # Update audit log
+            cursor.execute("""
+                UPDATE Audit_Logs
+                SET audit_reference_number=%s,
+                    action=%s
+                WHERE audit_ID=%s
+            """, (audit_reference_number, action_text, audit_ID))
+
+            # Link audit to description
+            cursor.execute("""
+                INSERT INTO audit_desc (audit_ID, description_audit_id)
+                VALUES (%s, %s)
+            """, (audit_ID, description_audit_id))
+
+            conn.commit()
     conn.commit()
     cursor.close()
     conn.close()

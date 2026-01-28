@@ -2,6 +2,8 @@ body {
     margin: 0;
     background: #f5f5f5;
     overflow-x: hidden;
+    font-family: Arial, sans-serif;
+    padding: 20px;
 }
 
 /* ===================== SIDEBAR ===================== */
@@ -48,111 +50,6 @@ body {
     font-size: 26px;
     cursor: pointer;
     color: blue;
-}
-
-/* ===================== ORDER TOGGLE ===================== */
-.close-order {
-    color: red;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.open-order {
-    color: green;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-/* ===================== ORDER PANEL ===================== */
-.order-container {
-    width: 25%;
-    min-width: 250px;
-    background: white;
-    height: 100%;
-    position: fixed;
-    right: -25%;
-    top: 0;
-    transition: right 0.4s ease;
-    z-index: 300;
-    display: flex;
-    flex-direction: column;
-    pointer-events: none;
-}
-
-.order-container.active {
-    right: 0;
-    pointer-events: auto;
-}
-
-/* ORDER TOP BAR */
-.order-top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* buttons left & right */
-    border-bottom: 1px solid #ccc;
-    padding: 5px 10px;
-    position: relative; /* needed for absolute centering of middle */
-}
-
-.order-top-bar {
-    background-color: #0d6efd; /* Blue background */
-    text-align: center;
-    padding: 20px 0;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-.order-top-bar input {
-    flex: 1;
-    padding: 6px 10px;
-    border-radius: 5px;
-    border: 1px solid #aaa;
-    margin: 0 5px;
-}
-
-.order-top-bar button {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: none;
-    background: #fcfdff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* ===================== DROPDOWNS ===================== */
-.dropdown {
-    position: relative;
-}
-
-.order-dropdowns {
-    display: flex;
-    gap: 10px;
-}
-
-.order-dropdowns .dropdown {
-    flex: 1;
-}
-
-.dropdown-btn {
-    width: 100%;
-    padding: 8px;
-    background: #5178c5;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: left;
-}
-
-.dropdown-content {
-    background: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-top: 5px;
-    padding: 5px;
 }
 
 /* ===================== MAIN ACTIVITY SHIFT ===================== */
@@ -295,256 +192,78 @@ body {
     color: #0d6efd;
 }
 
-/* ===================== TABLE DISPLAY ===================== */
-.table-display {
-    margin-top: 20px;
-    display: block;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-}
-
-/* Each floor stacked vertically */
-.floor-section {
-    margin-bottom: 25px;        /* spacing between floors */
-    display: flex;
-    flex-direction: column;     /* stack floor label and table group */
-}
-
-/* Floor label */
-.floor-label {
-    font-weight: 600;
-    font-size: 14px;
-    margin-bottom: 10px;
-    color: #0d6efd;            /* blue label */
-    text-transform: uppercase;
-}
-
-/* Table container: horizontal layout, wraps naturally */
-.floor-group {
-    display: flex;
-    flex-wrap: wrap;           /* tables wrap to next line if too many */
-    gap: 15px;                 /* space between table cards */
-}
-
-/* Table card */
+/* ========================= TABLE CARDS ========================= */
 .table-card {
-    flex: 0 1 140px;           /* adjust width */
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 16px;
-    height: 160px;
-    display: flex;
-    flex-direction: column;      /* stack content vertically */
-    align-items: center;         /* center horizontally */
-    justify-content: center;     /* center vertically */
-    font-weight: 600;
-    color: #333;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    position: relative;
+    width: 350px;
+    background: #007BFF;        /* BLUE HEADER */
+    color: white;               /* WHITE TEXT */
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
     cursor: pointer;
-}
-
-.table-pill {
-    background: #eef1f4;         
-    color: #2f2f2f;
-    padding: 8px 22px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 16px;
-    letter-spacing: 0.3px;
-    border: 1px solid #d6dbe0;
-    margin-bottom: 10px;  /* spacing below pill */
-}
-
-.table-capacity {
-    font-weight: 500;
-    font-size: 14px;
-    color: #6c757d;
-}
-
-
-/* ===== TABLE STATUS LEGEND ===== */
-.table-status-legend {
-    margin-top: 25px;
-    padding: 10px 14px;
-
-    display: flex;
-    align-items: center;
-
-    font-size: 14px;
-    color: #555;
-}
-
-/* Left text */
-.legend-title {
-    font-weight: 600;
-    color: #333;
-}
-
-/* Push dots to the end */
-.legend-items {
-    margin-left: auto;          /* KEY LINE */
-    display: flex;
-    gap: 22px;
-    align-items: center;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-}
-
-/* Dots */
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-}
-
-.status-dot.available {
-    background-color: #bfc5cc;
-}
-
-.status-dot.served {
-    background-color: #0d6efd;
-}
-
-.status-dot.reserved {
-    background-color: #dc3545;
-}
-.table-card.available {
-    border: 2px solid #bfc5cc; /* grey outline for available */
 }
 
 .table-card.reserved {
-    border: 2px solid #dc3545; /* red outline for reserved */
+    box-shadow: 0 0 0 3px orange inset;
 }
 
-.hidden-floor {
-    display: none !important;
-}
-
-/* Scrollable display inside Order Panel */
-#Order_panel_display_table_reservations {
-    background-color: #f8f9fa; /* light background, adjust as needed */
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    max-height: 400px; /* keeps panel size fixed, scrolls if content exceeds */
-    overflow-y: auto;
-    margin-top: 10px;
-    padding: 15px;
-}
-
-/* Optional placeholder styling */
-#Order_panel_display_table_reservations .display-placeholder {
-    color: #555;
-    font-style: italic;
-}
-
-#Order_panel_display_table_reservations {
-    flex: 1;                     /* <-- THIS is the key */
-    overflow-y: auto;            /* scrolling */
-    background-color: #f8f9fa;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 12px;
-    max-height: 600px;                /* increase this value to make it taller */                 /* adds scroll if content exceeds max-height */
-    
-}
-
-/* ===================== ORDER PANEL RECTANGLES ===================== */
-#order_pannel_reservations_display_rectangles {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Base rectangle */
-.reservation-rectangle {
-    background: #ffffff;
-    border: 2px solid #0d6efd;
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: all 0.25s ease;
-}
-
-/* Header row (always visible) */
-.reservation-header {
-    display: flex;
-    gap: 20px;
-    font-weight: 600;
-    color: #333;
-}
-
-/* Expanded content hidden by default */
-.reservation-body {
-    margin-top: 14px;
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-    font-size: 14px;
-}
-
-/* Expanded state */
-.reservation-rectangle.expanded .reservation-body {
-    display: flex;
-}
-
-/* Field row */
-.reservation-field {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Inputs (visual only) */
-.reservation-field input,
-.reservation-field textarea,
-.reservation-field select {
-    flex: 1;
-    padding: 6px 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
-
-/* Footer buttons */
-.reservation-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 14px;
-}
-
-.reservation-footer button {
-    padding: 6px 14px;
-    border-radius: 4px;
-    border: none;
-    font-weight: 600;
-}
-
-.save-btn {
-    background-color: #0d6efd;
+/* HEADER AREA */
+.table-info {
+    padding: 15px 20px;
+    background: #007BFF;
     color: white;
 }
 
-.collapse-btn {
-    background-color: #65000a;  /* red */
-    color: rgb(255, 251, 251);
+.table-info p {
+    margin: 4px 0;
+    color: white;
 }
 
+/* EXPANDED RESERVATION FORM */
+.reservation-form {
+    display: none;
+    background: #f9f9f9;
+    color: black;
+    padding: 15px;
+    max-height: 260px;
+    overflow-y: auto;
+}
 
+.table-card.expanded .reservation-form {
+    display: block;
+}
 
+.reservation-form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: black;
+}
 
+.reservation-form input,
+.reservation-form textarea,
+.reservation-form select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    color: black;
+}
 
+.reservation-form button {
+    margin-top: 15px;
+    padding: 10px;
+    width: 100%;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
 
-
-
-
-
-
-
-
+.reservation-form button:hover {
+    background: #218838;
+}
