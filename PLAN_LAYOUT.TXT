@@ -1,333 +1,98 @@
-
--- Create the database
-CREATE DATABASE IF NOT EXISTS Test;
-
-
-CREATE TABLE tables (
-							Table_db_id INT AUTO_INCREMENT PRIMARY KEY,
-							Table_number VARCHAR(50) NOT NULL UNIQUE,
-							table_capacity VARCHAR(50)
-						 );
-
-
-
-
-CREATE TABLE table_floor (
-					t_floor_id INT AUTO_INCREMENT PRIMARY KEY,
-					Table_db_id INT NOT NULL,
-					floor_name TEXT,
-					CONSTRAINT fk_table_floor
-						FOREIGN KEY (Table_db_id) REFERENCES tables(Table_db_id)
-						ON DELETE CASCADE
-						ON UPDATE CASCADE
-				);
-
-
-
-CREATE TABLE table_reservations (
-    reservation_id INT AUTO_INCREMENT PRIMARY KEY,
-    number_of_people INT NOT NULL,
-    reservation_notes TEXT,
-
-    resservation_date DATE NOT NULL,
-    reservation_time TIME NOT NULL,
-
-    Datetime_reservation_was_made DATETIME DEFAULT CURRENT_TIMESTAMP
-
-);
-
-CREATE TABLE reservation_status (
-    reservation_status_id INT AUTO_INCREMENT PRIMARY KEY,
-    status_name VARCHAR(50) NOT NULL UNIQUE
-);
-INSERT INTO reservation_status (status_name) VALUES
-('Available'),
-('Reserved'),
-('Seated'),
-('Completed'),
-('Cancelled');
-
-
-CREATE TABLE table_reservation_status (
-    reservation_id INT NOT NULL,
-    reservation_status_id INT NOT NULL,
-    datetime_of_status DATETIME NOT NULL,
-
-    CONSTRAINT fk_customer_reservation
-        FOREIGN KEY (reservation_id)
-        REFERENCES table_reservations(reservation_id)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_reservation_status
-        FOREIGN KEY (reservation_status_id)
-        REFERENCES reservation_status(reservation_status_id)
-        ON DELETE RESTRICT
-);
-
-
-Drop table table_reservation_status;
-
-Drop table table_reservations;
-
-
-CREATE TABLE table_reservation_link (
-    table_reservation_link_id INT AUTO_INCREMENT PRIMARY KEY,
-    table_id INT NOT NULL,
-    reservation_id INT NOT NULL,
-    CONSTRAINT fk_table
-        FOREIGN KEY (table_id)
-        REFERENCES tables(Table_db_id)
-        ON DELETE CASCADE,
-    CONSTRAINT fk_reservation
-        FOREIGN KEY (reservation_id)
-        REFERENCES table_reservations(reservation_id)
-        ON DELETE CASCADE
-);
-
-
-
-
--- Use the database
-USE Test;
-for each table in tables
-
-before clicking 
-+------------------------------------------------------------------------+
-| tables.Table_db_id      tables.Table_number     tables.table_capacity  |{ blue:background colour: white}
-+------------------------------------------------------------------------+
-.
-.
-.
-after clicking
-+------------------------------------------------------------------------+
-| tables.Table_db_id      tables.Table_number     tables.table_capacity  |{ blue:background colour: white}
-+------------------------------------------------------------------------+
-| table floor : table_floor.floor_name-------------------------------------->{ were tables.Table_db_id = table_floor.Table_db_id get table_floor.floor_name}
-|                                                                        |
-|                                                                        |
-| number of people:_____________________________________________________------->{int intput will be stored in table_reservations.number_of_people
-|                                                                        |
-|                     ________________________________________________   |
-|                   |                                                |   |
-| reservation notes:|_________________________________________________--------------->{large text field to be stored in table_reservations.reservation_notes}
-|                                                                        |
-| Date reserved:______________________________________________________--------------->{date input to be stored in table_reservations.resservation_date}
-|                                                                        |
-| Time reserved:_______________________________________________________--------------->{ time input to be stored in the table_reservations.reservation_time}
-|                                                                        |
-| Date time reservation was made: datetime(now)                          |
-|                                                                        |
-| Reservation status : drop menu--------------------------------------------->{ drop menu will get reservation_status.reservation_status_id and reservation_status.status_name 
-|                                                                        |       this will display reservation_status.status_name for user to select
-|                                                                        |
-|                                                                        |
-|                                                                        |
-| [save_button ]                                                         |                                                                       |
-+------------------------------------------------------------------------+
-
-
-
-
-
-
-
-+----------------+------------------+--------------------------------------------------------------------+-------------------+------------------+-------------------------------+
-| reservation_id | number_of_people | reservation_notes                                                  | resservation_date | reservation_time | Datetime_reservation_was_made |
-+----------------+------------------+--------------------------------------------------------------------+-------------------+------------------+-------------------------------+
-|              1 |                2 | txt large text for the reservation that is bieng made              | 2026-01-24        | 17:57:00         | 2026-01-23 12:52:22           |
-|              2 |               10 | large txt that will help in desc the reservation for the customer  | 2026-01-23        | 18:56:00         | 2026-01-23 12:53:22           |
-|              3 |               10 | jjtxt                                                              | 2026-01-23        | 12:53:00         | 2026-01-23 12:53:54           |
-|              4 |                5 | txt reservation txt to take not off                                | 2026-01-23        | 15:07:00         | 2026-01-23 13:07:51           |
-+----------------+------------------+--------------------------------------------------------------------+-------------------+------------------+-------------------------------+
-4 rows in set (0.00 sec)
-
-
-+----------------+-----------------------+---------------------+
-| reservation_id | reservation_status_id | datetime_of_status  |
-+----------------+-----------------------+---------------------+
-|              1 |                     2 | 2026-01-23 12:52:22 |
-|              2 |                     2 | 2026-01-23 12:53:22 |
-|              3 |                     2 | 2026-01-23 12:53:54 |
-|              4 |                     2 | 2026-01-23 13:07:51 |
-+----------------+-----------------------+---------------------+
-4 rows in set (0.00 sec)
-
-
-
-+---------------------------+----------+----------------+
-| table_reservation_link_id | table_id | reservation_id |
-+---------------------------+----------+----------------+
-|                         1 |        1 |              1 |
-|                         2 |        8 |              2 |
-|                         3 |        7 |              3 |
-|                         4 |       23 |              4 |
-+---------------------------+----------+----------------+
-4 rows in set (0.00 sec)
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Table Reservations</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<script>
-// Toggle the whole card
-function toggleCard(id) {
-    const card = document.getElementById("card-" + id);
-    card.classList.toggle("expanded");
-}
-
-// Toggle individual existing reservations
-function toggleExistingRes(id) {
-    const resDiv = document.getElementById("existing-res-" + id);
-    resDiv.classList.toggle("expanded");
-}
-</script>
-<style>
-/* Card styling */
-.table-card {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-bottom: 10px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    background: #fff;
-    position: relative;
-    max-height: 150px; /* initial small card */
-}
-
-/* Expanded card */
-.table-card.expanded {
-    max-height: none;
-    overflow: visible;
-}
-
-/* Reserved table highlight */
-.table-card.reserved { background-color: yellow; }
-
-/* Table info clickable area */
-.table-info { cursor: pointer; }
-
-/* Reservation form */
-.reservation-form { margin-top: 10px; }
-
-/* Existing reservations container */
-.existing-reservations {
-    margin-top: 10px;
-}
-
-/* Individual existing reservation */
-.existing-reservation {
-    background: #f0f0f0;
-    color: #000;
-    padding: 5px;
-    margin: 5px 0;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* Hidden details inside each existing reservation */
-.existing-reservation-details {
-    display: none;
-    padding: 5px;
-    margin-top: 5px;
-    border-top: 1px solid #ccc;
-}
-
-/* Show details when expanded */
-.existing-reservation.expanded .existing-reservation-details {
-    display: block;
-}
-</style>
-</head>
-<body>
-
-{% if error_msg %}
-<div style="color:red; font-weight:bold;">{{ error_msg }}</div>
-{% endif %}
-
-<div class="container">
-    {% for table in tables %}
-    {% set res_list = reservation_dict.get(table.Table_db_id, []) %}
-    <div class="table-card {% if res_list %}reserved{% endif %}" id="card-{{ table.Table_db_id }}">
-        
-        <!-- Table info -->
-        <div class="table-info" onclick="toggleCard('{{ table.Table_db_id }}')">
-            <p><strong>Table ID:</strong> {{ table.Table_db_id }}</p>
-            <p><strong>Table Number:</strong> {{ table.Table_number }}</p>
-            <p><strong>Capacity:</strong> {{ table.table_capacity }}</p>
-        </div>
-
-        <!-- Existing reservations (collapsible individually) -->
-        {% if res_list %}
-        <div class="existing-reservations">
-            <h4>Existing Reservations:</h4>
-            {% for res in res_list %}
-            <div class="existing-reservation" onclick="toggleExistingRes('{{ table.Table_db_id }}-{{ loop.index }}')">
-                <p><strong>Date:</strong> {{ res.resservation_date }} | <strong>Time:</strong> {{ res.reservation_time }}</p>
-                <div class="existing-reservation-details" id="existing-res-{{ table.Table_db_id }}-{{ loop.index }}">
-                    <p><strong>People:</strong> {{ res.number_of_people }}</p>
-                    <p><strong>Notes:</strong> {{ res.reservation_notes }}</p>
-                    <p><strong>Status:</strong>
-                        {% for status in statuses %}
-                            {% if status.reservation_status_id == res.reservation_status_id %}
-                                {{ status.status_name }}
-                            {% endif %}
-                        {% endfor %}
-                    </p>
-                    <p><strong>Datetime Made:</strong> {{ res.Datetime_reservation_was_made }}</p>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <!-- Reservation form -->
-        <div class="reservation-form">
-            <p><strong>Table Floor:</strong> {{ floor_dict.get(table.Table_db_id, 'No floor assigned') }}</p>
-            <form method="POST">
-                <input type="hidden" name="table_id" value="{{ table.Table_db_id }}">
-
-                <label>Number of People:</label>
-                <input type="number" name="number_of_people" required>
-
-                <label>Reservation Notes:</label>
-                <textarea name="reservation_notes" rows="2"></textarea>
-
-                <label>Date Reserved:</label>
-                <input type="date" name="resservation_date" required>
-
-                <label>Time Reserved:</label>
-                <input type="time" name="reservation_time" required>
-
-                <label>Reservation Status:</label>
-                <select name="reservation_status" required>
-                    {% for status in statuses %}
-                    <option value="{{ status.reservation_status_id }}">{{ status.status_name }}</option>
-                    {% endfor %}
-                </select>
-
-                <p><strong>Datetime Reservation Was Made:</strong>
-                    {{ datetime_now.strftime('%Y-%m-%d %H:%M:%S') }}
-                </p>
-
-                <button type="submit">Save Reservation</button>
-            </form>
-        </div>
-
-    </div>
-    {% endfor %}
-</div>
-
-</body>
-</html>
-
-
-
-
-
-+-------------------------------------------------------------------+
-| table_reservation.resservation_date      table_reservation.
+i want rectangular display cards like 
+
+ reservation detials in the database 
+ for all reservations in the  table_reservations
++-------------------------------------------------------------------------------------------------------------+
+| #[table_reservations.reservation_id].[user_reservations.user_id].[customer_table_reservations.customer_name]|
+|                                                                                                             |
++-------------------------------------------------------------------------------------------------------------+
+|.Table               :       tables.Table_number                                                             |
+|                                                                                                             |
+|.floor               :       table_floor.floor_name                                                          |
+|                                                                                                             |
+|.entered_by          :       user.user_name                                                                  |
+|                                                                                                             |
+|.number of people    :       table_reservations.number_of_people                                             |
+|                                                                                                             |
+|.SPECIFICATIONS      :       table_reservations.reservation_notes                                            |
+|                                                                                                             |
+|. Reservation/date   :       table_reservations.resservation_date                                            |
+|                                                                                                             |
+|. Reservation/Time   :       table_reservations.reservation_time                                             |
+|                                                                                                             |
+|. date completed     :       table_reservations.Datetime_reservation_was_made                                |
+|                                                                                                             |
+| customer            :                                                                                       |
+|                                                                                                             |
+|. Reservation status :       select menu reservation                                                         |
+|                                                                                                             |
+|[ btn save changes]                                                                                          |
++-------------------------------------------------------------------------------------------------------------+
+Table =  where table_reservations.reservation_id = table_reservation_link.reservation_id get table_reservation_link.table_id
+         where table_reservation_link.table_id = tables.Table_db_id get tables.Table_number 
+
+floor = where table_reservations.reservation_id = table_reservation_link.reservation_id get table_reservation_link.table_id
+         where table_reservation_link.table_id = table_floor.Table_db_id get table_floor.floor_name
+
+.entered_by =  where table_reservations.reservation_id = user_reservations.reservation_id get user_reservations.user_id
+               where user_reservations.user_id = user.user_id get user.user_name  
+
+Reservation status : these will by default show current reservation status but allows user to select another reservation status 
+                     save
+
+
+
+
+
+
+
+
+
+
+
++----------------+---------+------------+------------------------+--------------+------------+------------------+-------------------------------------------+-------------------+------------------+-------------------------------+-----------------------+
+| reservation_id | user_id | entered_by | customer_name          | Table_number | floor_name | number_of_people | reservation_notes                         | resservation_date | reservation_time | Datetime_reservation_was_made | reservation_status_id |
++----------------+---------+------------+------------------------+--------------+------------+------------------+-------------------------------------------+-------------------+------------------+-------------------------------+-----------------------+
+|              1 |       5 | john_doe4  | Mark angelo 0708512040 | T-31         | 1st_floor  |               10 | notes reserved for the table reservations | 2026-01-29        | 17:11:00         | 2026-01-29 15:12:03           |                     2 |
+|              2 |       5 | john_doe4  | miiro 0708512040       | T-32         | 1st_floor  |               10 | reserved tables usually high miantenence  | 2026-01-29        | 22:12:00         | 2026-01-29 15:12:51           |                     2 |
++----------------+---------+------------+------------------------+--------------+------------+------------------+-------------------------------------------+-------------------+------------------+-------------------------------+-----------------------+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

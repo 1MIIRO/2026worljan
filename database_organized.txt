@@ -639,6 +639,11 @@ CREATE TABLE order_payment_status (
 +-------------------------+-------------+------+-----+---------+----------------+
 2 rows in set (0.04 sec)
 
+
+INSERT INTO order_payment_status (order_payment_status) VALUES
+('unpaid'),
+('paid');
+
 ************************************************************************************
 order_with_state
 
@@ -659,6 +664,35 @@ CREATE TABLE order_with_state (
 );
 
 **********************************************************************************************
+
+CREATE TABLE order_with_state_payment (
+    order_ID INT NOT NULL,
+    order_payment_status_id INT NOT NULL,
+    LAST_UPDATE DATETIME NOT NULL, 
+	  
+    FOREIGN KEY (order_ID)
+        REFERENCES orders_improved_table(order_ID)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    FOREIGN KEY (order_payment_status_id)
+        REFERENCES order_payment_status(order_payment_status_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 SELECT
@@ -884,7 +918,41 @@ CREATE TABLE table_reservation_link (
 
 Audit_log  
 
-Audit_log 
+CREATE TABLE Audit_Logs (
+    audit_ID INT AUTO_INCREMENT PRIMARY KEY,
+    audit_reference_number VARCHAR(50) NOT NULL,
+    action VARCHAR(255),
+    audit_date DATE,
+    audit_time TIME,
+    done_by VARCHAR(100)
+);
+
+***************************************************************************************************
+CREATE TABLE Description_audit (
+    description_audit_id INT AUTO_INCREMENT PRIMARY KEY,
+    description_title VARCHAR(255) NOT NULL
+);
+
+INSERT INTO Description_audit (description_title)
+VALUES
+    ('LOG-IN'),
+    ('ORDER'),
+    ('ITEM'),
+    ('TABLE_RESERVATION');
+
+
+*************************************************************************************************
+CREATE TABLE audit_desc (
+    audit_ID INT NOT NULL,
+    description_audit_id INT NOT NULL,
+    PRIMARY KEY (audit_ID, description_audit_id),
+    FOREIGN KEY (audit_ID) REFERENCES Audit_Logs(audit_ID),
+    FOREIGN KEY (description_audit_id) REFERENCES Description_audit(description_audit_id)
+);
+
+
+
+
 
    
 	   

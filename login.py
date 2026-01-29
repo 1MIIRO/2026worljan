@@ -326,9 +326,11 @@ def activity_Tables():
         table_id = int(request.form["table_id"])
         number_of_people = int(request.form["number_of_people"])
         reservation_notes = request.form["reservation_notes"]
+        customer_name = request.form["customer_name"]
         resservation_date = request.form["resservation_date"]
         reservation_time = request.form["reservation_time"]
         reservation_status_id = int(request.form["reservation_status"])
+        user_id = session['user_id']
         now = datetime.now()
 
         # ---- CONFLICT CHECK ----
@@ -376,6 +378,20 @@ def activity_Tables():
                 (reservation_id, reservation_status_id, datetime_of_status)
                 VALUES (%s, %s, %s)
             """, (reservation_id, reservation_status_id, now))
+            conn.commit()
+
+            cursor.execute("""
+                INSERT INTO customer_table_reservations
+                (reservation_id,customer_name)
+                VALUES (%s, %s)
+            """, (reservation_id, customer_name))
+            conn.commit()
+
+            cursor.execute("""
+                INSERT INTO user_reservations
+                (user_id,reservation_id)
+                VALUES (%s, %s)
+            """, (user_id, reservation_id))
             conn.commit()
 
             # ---- LINK reservation to table ----
@@ -1242,6 +1258,97 @@ def update_reservation_status():
         cursor.close()
         conn.close()
 
+@app.route('/newUpdateTable_reservation_display')
+def newUpdateTable_reservation_display():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+          SELECT
+    table_reservations.reservation_id,
+    user_reservations.user_id,
+    user.user_name AS entered_by,   -- alias so Python can use 'entered_by'
+    customer_table_reservations.customer_name,
+    tables.Table_number,
+    table_floor.floor_name,
+    table_reservations.number_of_people,
+    table_reservations.reservation_notes,
+    table_reservations.resservation_date,
+    table_reservations.reservation_time,
+    table_reservations.Datetime_reservation_was_made,
+    table_reservation_status.reservation_status_id
+FROM table_reservations
+LEFT JOIN table_reservation_link
+    ON table_reservations.reservation_id = table_reservation_link.reservation_id
+LEFT JOIN tables
+    ON table_reservation_link.table_id = tables.Table_db_id
+LEFT JOIN table_floor
+    ON table_reservation_link.table_id = table_floor.Table_db_id
+LEFT JOIN user_reservations
+    ON table_reservations.reservation_id = user_reservations.reservation_id
+LEFT JOIN user
+    ON user_reservations.user_id = user.user_id
+LEFT JOIN customer_table_reservations
+    ON table_reservations.reservation_id = customer_table_reservations.reservation_id
+LEFT JOIN table_reservation_status
+    ON table_reservations.reservation_id = table_reservation_status.reservation_id
+
+
+        """)
+
+
+        rows = cursor.fetchall()
+        reservations = []
+
+        for row in rows:
+            # ---- DATE stringify
+            date_value = row['resservation_date']
+            if isinstance(date_value, datetime):
+                date_value = date_value.strftime("%Y-%m-%d")
+            else:
+                date_value = str(date_value) if date_value else ""
+
+            # ---- TIME stringify
+            time_value = row['reservation_time']
+            if isinstance(time_value, datetime):
+                time_value = time_value.strftime("%H:%M:%S")
+            elif isinstance(time_value, timedelta):
+                total = int(time_value.total_seconds())
+                time_value = f"{total//3600:02}:{(total%3600)//60:02}:{total%60:02}"
+            else:
+                time_value = str(time_value) if time_value else ""
+
+            # ---- DATETIME stringify
+            completed_value = row['Datetime_reservation_was_made']
+            if isinstance(completed_value, datetime):
+                completed_value = completed_value.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                completed_value = str(completed_value) if completed_value else ""
+
+            reservations.append({
+                "reservation_id": row['reservation_id'],
+                "user_id": row['user_id'],
+                "customer_name": row['customer_name'] or "",
+                "Table_number": row['Table_number'] or "",
+                "floor_name": row['floor_name'] or "",
+                "entered_by": row['entered_by'] or "",
+                "number_of_people": row['number_of_people'] or 0,
+                "reservation_notes": row['reservation_notes'] or "",
+                "resservation_date": date_value,
+                "reservation_time": time_value,
+                "Datetime_reservation_was_made": completed_value,
+                "reservation_status_id": row['reservation_status_id']
+               
+            })
+
+        return jsonify(reservations)
+
+    except Exception as e:
+        print("ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -1250,7 +1357,6 @@ def logout():
 if __name__ == "__main__":
  app.run(debug=True)
  
-
 
 
 

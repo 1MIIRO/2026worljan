@@ -27,6 +27,21 @@
     </ul>
 </div>
 
+<!-- ORDER PANEL -->
+<div id="orderContainer" class="order-container">
+    <!-- Top Title -->
+    <div class="order-top-bar">
+        <h1 class="order-panel-title">TABLE RESERVATIONS</h1>
+    </div>
+
+    <!-- BIG EMPTY DISPLAY SCREEN -->
+    <div id="orderDisplayScreen" class="order-display-screen">
+        <div id="orderDisplayScreen" class="order-display-screen">
+    <!-- Reservations will be injected here by JS -->
+</div>
+    </div>
+</div>
+
 <!-- TOP BAR -->
 <div class="top-bar d-flex align-items-center">
     <div id="menuToggle" class="menu-icon">&#9776;</div>
@@ -108,6 +123,8 @@
                                             <input type="number" name="number_of_people" required>
                                             <label>Reservation Notes:</label>
                                             <textarea name="reservation_notes" rows="2"></textarea>
+                                            <label>Customer Name:</label>
+                                            <input type="text" name="customer_name" required>
                                             <label>Date Reserved:</label>
                                             <input type="date" name="resservation_date" required>
                                             <label>Time Reserved:</label>
@@ -164,25 +181,164 @@
     updateDateTime();
 
     const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.getElementById('sidebar');
-    const activityMain = document.getElementById('activityMain');
-    const topBarItems = document.querySelectorAll('.top-bar-items');
+        const sidebar = document.getElementById('sidebar');
+        const activityMain = document.getElementById('activityMain');
+        const topBarItems = document.querySelectorAll('.top-bar-items');
+        const orderToggle = document.getElementById('orderToggle');
+        const orderContainer = document.getElementById('orderContainer');
 
-    function shiftUI(shiftSidebar) {
-        if (shiftSidebar) {
-            activityMain.classList.add('shifted-left');
-            topBarItems.forEach(el => el.classList.add('shifted-left-time'));
-        } else {
-            activityMain.classList.remove('shifted-left');
-            topBarItems.forEach(el => el.classList.remove('shifted-left-time'));
+        let shiftSidebar = false;
+        let shiftOrder = false;
+
+        function shiftUI() {
+            // SHIFT LEFT FOR SIDEBAR
+            if (shiftSidebar) {
+                activityMain.classList.add('shifted-left');
+                topBarItems.forEach(el => el.classList.add('shifted-left-time'));
+            } else {
+                activityMain.classList.remove('shifted-left');
+                topBarItems.forEach(el => el.classList.remove('shifted-left-time'));
+            }
+
+            // SHIFT RIGHT FOR ORDER PANEL
+            if (shiftOrder) {
+                activityMain.classList.add('shifted-right');
+                topBarItems.forEach(el => el.classList.add('shifted-right-time'));
+            } else {
+                activityMain.classList.remove('shifted-right');
+                topBarItems.forEach(el => el.classList.remove('shifted-right-time'));
+            }
         }
-    }
 
-    // SIDEBAR TOGGLE
-    menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
-        shiftUI(sidebar.classList.contains('active'));
+        // SIDEBAR TOGGLE
+        menuToggle.addEventListener('click', () => {
+            shiftSidebar = !shiftSidebar;
+            sidebar.classList.toggle('active');
+            shiftUI();
+        });
+
+        // ORDER PANEL TOGGLE
+        orderToggle.addEventListener('click', () => {
+            shiftOrder = !shiftOrder;
+
+            if (shiftOrder) {
+                orderContainer.classList.add("active");
+                orderToggle.textContent = "Close Order";
+                orderToggle.className = "close-order top-bar-item";
+
+                // Close sidebar when order panel opens
+                shiftSidebar = false;
+                sidebar.classList.remove('active');
+            } else {
+                orderContainer.classList.remove("active");
+                orderToggle.textContent = "Open Order";
+                orderToggle.className = "open-order top-bar-item";
+            }
+
+            shiftUI();
+        });
+
+        // Fetch reservation statuses from backend
+async function fetchReservationStatuses() {
+    const response = await fetch('/get_reservation_statuses');
+    const statuses = await response.json(); // expect [{status_id, status_name}, ...]
+    const statusMap = {};
+    statuses.forEach(s => statusMap[s.status_id] = s.status_name);
+    return statusMap;
+}
+
+// Fetch reservations from backend
+async function fetchReservations() {
+    const response = await fetch('/newUpdateTable_reservation_display');
+    const reservations = await response.json();
+
+    // Sort by nearest date/time
+    reservations.sort((a, b) => {
+        const dateA = new Date(a.resservation_date + ' ' + a.reservation_time);
+        const dateB = new Date(b.resservation_date + ' ' + b.reservation_time);
+        return dateA - dateB;
     });
+
+    return reservations;
+}
+
+// Create a single reservation card
+function createReservationCard(reservation, reservationStatuses) {
+    const card = document.createElement('div');
+    card.className = 'order-rectangle';
+
+    card.innerHTML = `
+        <div><strong>#${reservation.reservation_id}.${reservation.user_id}.${reservation.customer_name}</strong></div>
+        <div>.Table               : ${reservation.Table_number || 'N/A'}</div>
+        <div>.floor               : ${reservation.floor_name || 'N/A'}</div>
+        <div>.entered_by          : ${reservation.entered_by || 'N/A'}</div>
+        <div>.number of people    : ${reservation.number_of_people || 'N/A'}</div>
+        <div>.SPECIFICATIONS      : ${reservation.reservation_notes || ''}</div>
+        <div>.Reservation/date    : ${reservation.resservation_date}</div>
+        <div>.Reservation/Time    : ${reservation.reservation_time}</div>
+        <div>.date completed      : ${reservation.Datetime_reservation_was_made}</div>
+        <div>.Reservation status  :
+            <select class="reservation-status">
+                ${Object.entries(reservationStatuses).map(([id, name]) => `
+                    <option value="${id}" ${reservation.reservation_status_id == id ? 'selected' : ''}>${name}</option>
+                `).join('')}
+            </select>
+        </div>
+        <button class="rect-save-btn">Save Changes</button>
+    `;
+
+    card.querySelector('.rect-save-btn').addEventListener('click', async () => {
+        const selectedStatus = card.querySelector('.reservation-status').value;
+
+        try {
+            const res = await fetch('/update_reservation_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reservation_id: reservation.reservation_id,
+                    reservation_status_id: selectedStatus
+                })
+            });
+
+            if (res.ok) {
+                alert('Reservation status updated!');
+            } else {
+                alert('Failed to update reservation status.');
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    });
+
+    return card;
+}
+
+// Render all reservations
+async function renderReservations() {
+    const container = document.getElementById('orderDisplayScreen');
+    container.innerHTML = ''; // clear previous content
+
+    const [reservationStatuses, reservations] = await Promise.all([
+        fetchReservationStatuses(),
+        fetchReservations()
+    ]);
+
+    reservations.forEach(res => {
+        const card = createReservationCard(res, reservationStatuses);
+        container.appendChild(card);
+    });
+}
+
+// Call on page load
+document.addEventListener('DOMContentLoaded', () => {
+    renderReservations();
+});
+
+
+
+
+
+
 
     document.addEventListener('DOMContentLoaded', () => {
         const floorButtons = document.querySelectorAll('.pill-btn');
