@@ -769,8 +769,6 @@ def place_order_table():
         print("Database Error:", e)
         return jsonify({"success": False, "error": str(e)})
 
-from flask import jsonify
-from datetime import datetime, timedelta
 @app.route('/get_today_orders_display', methods=['GET'])
 def get_today_orders_display():
     conn = get_connection()
@@ -982,9 +980,6 @@ def order_display_cards():
 
     return jsonify(list(orders.values()))
 
-from flask import jsonify
-from datetime import datetime
-
 @app.route('/billing_queue_display')
 def billing_queue_display():
     conn = get_connection()
@@ -1183,7 +1178,7 @@ def save_table_reservation():
             VALUES (%s, %s, NOW())
         """, (
             reservation_id,
-            data['reservation_status_id']
+            2
         ))
 
         # 3️⃣ Insert into customer_table_reservations
@@ -1265,34 +1260,56 @@ def newUpdateTable_reservation_display():
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
-          SELECT
-    table_reservations.reservation_id,
-    user_reservations.user_id,
-    user.user_name AS entered_by,   -- alias so Python can use 'entered_by'
-    customer_table_reservations.customer_name,
-    tables.Table_number,
-    table_floor.floor_name,
-    table_reservations.number_of_people,
-    table_reservations.reservation_notes,
-    table_reservations.resservation_date,
-    table_reservations.reservation_time,
-    table_reservations.Datetime_reservation_was_made,
-    table_reservation_status.reservation_status_id
-FROM table_reservations
-LEFT JOIN table_reservation_link
-    ON table_reservations.reservation_id = table_reservation_link.reservation_id
-LEFT JOIN tables
-    ON table_reservation_link.table_id = tables.Table_db_id
-LEFT JOIN table_floor
-    ON table_reservation_link.table_id = table_floor.Table_db_id
-LEFT JOIN user_reservations
-    ON table_reservations.reservation_id = user_reservations.reservation_id
-LEFT JOIN user
-    ON user_reservations.user_id = user.user_id
-LEFT JOIN customer_table_reservations
-    ON table_reservations.reservation_id = customer_table_reservations.reservation_id
-LEFT JOIN table_reservation_status
-    ON table_reservations.reservation_id = table_reservation_status.reservation_id
+         
+                SELECT
+    tr.reservation_id,
+    ur.user_id,
+    u.user_name AS entered_by,
+    ctr.customer_name,
+    t.Table_number,
+    tf.floor_name,
+    tr.number_of_people,
+    tr.reservation_notes,
+    tr.resservation_date,
+    tr.reservation_time,
+    tr.Datetime_reservation_was_made,
+
+    -- 👇 now both ID + NAME
+    latest_status.reservation_status_id,
+    latest_status.status_name
+
+FROM table_reservations tr
+
+LEFT JOIN table_reservation_link trl
+    ON tr.reservation_id = trl.reservation_id
+LEFT JOIN tables t
+    ON trl.table_id = t.Table_db_id
+LEFT JOIN table_floor tf
+    ON trl.table_id = tf.Table_db_id
+LEFT JOIN user_reservations ur
+    ON tr.reservation_id = ur.reservation_id
+LEFT JOIN user u
+    ON ur.user_id = u.user_id
+LEFT JOIN customer_table_reservations ctr
+    ON tr.reservation_id = ctr.reservation_id
+
+LEFT JOIN (
+    SELECT
+        trs1.reservation_id,
+        trs1.reservation_status_id,
+        rs.status_name
+    FROM table_reservation_status trs1
+    JOIN reservation_status rs
+        ON rs.reservation_status_id = trs1.reservation_status_id
+    JOIN (
+        SELECT reservation_id, MAX(datetime_of_status) AS max_date
+        FROM table_reservation_status
+        GROUP BY reservation_id
+    ) trs2
+        ON trs1.reservation_id = trs2.reservation_id
+       AND trs1.datetime_of_status = trs2.max_date
+) latest_status
+    ON tr.reservation_id = latest_status.reservation_id;
 
 
         """)
@@ -1338,7 +1355,8 @@ LEFT JOIN table_reservation_status
                 "resservation_date": date_value,
                 "reservation_time": time_value,
                 "Datetime_reservation_was_made": completed_value,
-                "reservation_status_id": row['reservation_status_id']
+                "reservation_status_id": row['reservation_status_id'],
+                "reservation_status_name": row['status_name'] or ""
                
             })
 
@@ -1348,7 +1366,6 @@ LEFT JOIN table_reservation_status
         print("ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/logout')
 def logout():
     session.clear()
@@ -1357,7 +1374,6 @@ def logout():
 if __name__ == "__main__":
  app.run(debug=True)
  
-
 
 
 
