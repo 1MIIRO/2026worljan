@@ -267,106 +267,126 @@
         }
 
         // ------------------------------
-        // Create a single reservation card
-        // ------------------------------
-        function createReservationCard(reservation, reservationStatuses) {
-            const card = document.createElement('div');
-            card.className = 'order-rectangle';
+// Helpers
+// ------------------------------
+function isToday(dateString) {
+    const today = new Date().toISOString().split('T')[0];
+    return dateString === today;
+}
 
-            // Current status ID + Name
-            const currentStatusId = reservation.reservation_status_id;
-            const currentStatusName = reservation.status_name || 'Unknown';
+// ------------------------------
+// Create reservation card
+// ------------------------------
+function createReservationCard(reservation, reservationStatuses) {
+    const card = document.createElement('div');
+    card.className = 'order-rectangle';
 
-            card.innerHTML = `
-                <div class="order-panel-card-header">
-                      #${reservation.reservation_id}.${reservation.user_id}.${reservation.customer_name}
-                </div>
-                <div class="order-panel-card-body-text">
-                <div>.Table               : ${reservation.Table_number || 'N/A'}</div>
-                <div>.floor               : ${reservation.floor_name || 'N/A'}</div>
-                <div>.entered_by          : ${reservation.entered_by || 'N/A'}</div>
-                <div>.number of people    : ${reservation.number_of_people || 'N/A'}</div>
-                <div>.SPECIFICATIONS      : ${reservation.reservation_notes || ''}</div>
-                <div>.Reservation/date    : ${reservation.resservation_date}</div>
-                <div>.Reservation/Time    : ${reservation.reservation_time}</div>
-                <div>.date completed      : ${reservation.Datetime_reservation_was_made}</div>
-                </div>
-                <div class="order-panel-reservation-select-list">.Reservation status  :
-                    <select class="reservation-status">
-                        ${Object.entries(reservationStatuses).map(([id, name]) => `
-                            <option value="${id}" ${currentStatusId == id ? 'selected' : ''}>${name}</option>
-                        `).join('')}
-                    </select>
-                </div>
-                <button class="rect-save-btn">Save Changes</button>
-            `;
+    // Current status
+    const currentStatusId = reservation.reservation_status_id;
 
-            // Save changes button
-            card.querySelector('.rect-save-btn').addEventListener('click', async () => {
-                const selectedStatus = card.querySelector('.reservation-status').value;
+    // Header color logic
+    const isTodayReservation = isToday(reservation.resservation_date);
 
-                try {
-                    const res = await fetch('/update_reservation_status', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            reservation_id: reservation.reservation_id,
-                            reservation_status_id: selectedStatus
-                        })
-                    });
+    card.innerHTML = `
+        <div class="order-panel-card-header ${isTodayReservation ? 'today-header' : ''}">
+            #${reservation.reservation_id}.${reservation.user_id}.${reservation.customer_name}
+        </div>
 
-                    if (res.ok) {
-                        alert('Reservation status updated!');
-                    } else {
-                        alert('Failed to update reservation status.');
-                    }
-                } catch (err) {
-                    alert('Error: ' + err.message);
-                }
+        <div class="order-panel-card-body-text">
+            <div>.Table               : ${reservation.Table_number || 'N/A'}</div>
+            <div>.floor               : ${reservation.floor_name || 'N/A'}</div>
+            <div>.entered_by          : ${reservation.entered_by || 'N/A'}</div>
+            <div>.number of people    : ${reservation.number_of_people || 'N/A'}</div>
+            <div>.SPECIFICATIONS      : ${reservation.reservation_notes || ''}</div>
+            <div>.Reservation/date    : ${reservation.resservation_date}</div>
+            <div>.Reservation/Time    : ${reservation.reservation_time}</div>
+            <div>.date completed      : ${reservation.Datetime_reservation_was_made}</div>
+        </div>
+
+        <div class="order-panel-reservation-select-list">
+            .Reservation status :
+            <select class="reservation-status">
+                ${Object.entries(reservationStatuses).map(([id, name]) => `
+                    <option value="${id}" ${currentStatusId == id ? 'selected' : ''}>
+                        ${name}
+                    </option>
+                `).join('')}
+            </select>
+        </div>
+
+        <button class="rect-save-btn">Save Changes</button>
+    `;
+
+    // ------------------------------
+    // Save status change
+    // ------------------------------
+    card.querySelector('.rect-save-btn').addEventListener('click', async () => {
+        const selectedStatus = card.querySelector('.reservation-status').value;
+
+        try {
+            const res = await fetch('/update_reservation_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reservation_id: reservation.reservation_id,
+                    reservation_status_id: selectedStatus
+                })
             });
 
-            return card;
-        }
-
-        // ------------------------------
-        // Render all reservations safely
-        // ------------------------------
-        async function renderReservations() {
-            const container = document.getElementById('orderDisplayScreen');
-            container.innerHTML = ''; // clear previous content
-
-            try {
-                const [reservationStatuses, reservations] = await Promise.all([
-                    fetchReservationStatuses(),
-                    fetchReservations()
-                ]);
-
-                console.log('Reservations fetched:', reservations.length);
-
-                // Prevent duplicates by only rendering unique reservation_ids
-                const seenIds = new Set();
-                reservations.forEach(res => {
-                    if (!seenIds.has(res.reservation_id)) {
-                        const card = createReservationCard(res, reservationStatuses);
-                        container.appendChild(card);
-                        seenIds.add(res.reservation_id);
-                    }
-                });
-
-            } catch (err) {
-                console.error('Error rendering reservations:', err);
+            if (res.ok) {
+                alert('Reservation status updated!');
+            } else {
+                alert('Failed to update reservation status.');
             }
+        } catch (err) {
+            alert('Error: ' + err.message);
         }
+    });
 
-        // ------------------------------
-        // Call on page load safely
-        // ------------------------------
-        if (!window.reservationsRendered) {
-            document.addEventListener('DOMContentLoaded', () => {
-                renderReservations();
-                window.reservationsRendered = true;
-            });
-        }
+    return card;
+}
+
+// ------------------------------
+// Render reservations (NO duplicates)
+// ------------------------------
+async function renderReservations() {
+    const container = document.getElementById('orderDisplayScreen');
+    container.innerHTML = '';
+
+    try {
+        const [reservationStatuses, reservations] = await Promise.all([
+            fetchReservationStatuses(),
+            fetchReservations()
+        ]);
+
+        console.log('Reservations fetched:', reservations.length);
+
+        const seenIds = new Set();
+
+        reservations.forEach(res => {
+            if (!seenIds.has(res.reservation_id)) {
+                container.appendChild(
+                    createReservationCard(res, reservationStatuses)
+                );
+                seenIds.add(res.reservation_id);
+            }
+        });
+
+    } catch (err) {
+        console.error('Error rendering reservations:', err);
+    }
+}
+
+// ------------------------------
+// Load once safely
+// ------------------------------
+if (!window.reservationsRendered) {
+    document.addEventListener('DOMContentLoaded', () => {
+        renderReservations();
+        window.reservationsRendered = true;
+    });
+}
+
 
                 document.addEventListener('DOMContentLoaded', () => {
         const floorButtons = document.querySelectorAll('.pill-btn');
